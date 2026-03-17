@@ -34,45 +34,199 @@ const VIEW_OPTIONS = [
 ];
 
 const APP_SECTIONS = [
-  { key: "leaderboard", label: "榜单总览", note: "教学能力与通用基准双轴榜单" },
-  { key: "qualitative", label: "质性评审", note: "对话 messages 与人工评分" },
+  { key: "leaderboard", label: "Leaderboard", note: "教学能力与通用基准双轴榜单" },
+  { key: "qualitative", label: "Qualitative Review", note: "对话 messages 与人工评分" },
 ];
 
 const LOCAL_RATINGS_KEY = "hi-react-cc.qualitative-ratings";
 
 const css = `
   :root {
-    color-scheme: light;
-    font-family: "SF Pro Display", "PingFang SC", "Hiragino Sans GB", sans-serif;
-    --bg: #f4efe7;
-    --panel: rgba(255, 251, 245, 0.88);
-    --panel-strong: #fffaf2;
-    --text: #1f2937;
-    --muted: #5b6472;
-    --line: rgba(41, 51, 70, 0.12);
-    --accent: #c76835;
-    --accent-strong: #8d3d17;
-    --cool: #1f6f78;
-    --shadow: 0 24px 60px rgba(97, 54, 25, 0.12);
+    color-scheme: dark;
+    font-family: "Iowan Old Style", "Source Han Serif SC", "PingFang SC", serif;
+    --bg: #221f1c;
+    --sidebar: #262320;
+    --sidebar-soft: #2c2825;
+    --panel: rgba(54, 47, 42, 0.82);
+    --panel-strong: rgba(63, 55, 49, 0.95);
+    --text: #f1ebe3;
+    --muted: #b8aea1;
+    --line: rgba(255, 245, 235, 0.1);
+    --accent: #d07741;
+    --accent-strong: #f1c6a0;
+    --cool: #3f9ba1;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
   }
 
   * { box-sizing: border-box; }
   body {
     margin: 0;
     min-width: 320px;
-    background:
-      radial-gradient(circle at top left, rgba(199, 104, 53, 0.22), transparent 28%),
-      radial-gradient(circle at top right, rgba(31, 111, 120, 0.18), transparent 24%),
-      linear-gradient(180deg, #f8f4ee 0%, var(--bg) 100%);
+    background: var(--bg);
     color: var(--text);
   }
 
   button, input, select { font: inherit; }
 
   .app {
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: 32px 20px 56px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: linear-gradient(180deg, var(--sidebar) 0%, #24211e 100%);
+    border-right: 1px solid var(--line);
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-head {
+    padding: 20px 22px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .brand-mark {
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  .brand h2 {
+    margin: 0;
+    font-size: 34px;
+    letter-spacing: -0.04em;
+    font-weight: 600;
+  }
+
+  .brand-badge {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .sidebar-copy {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 13px;
+  }
+
+  .sidebar-nav {
+    padding: 18px 14px;
+  }
+
+  .mode-switcher {
+    display: grid;
+    gap: 8px;
+  }
+
+  .sidebar-group {
+    margin-top: 24px;
+  }
+
+  .sidebar-label {
+    margin: 0 0 12px 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .mode-tab {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 14px 14px 14px 16px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: 180ms ease;
+  }
+
+  .mode-tab:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .mode-tab.active {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(90deg, rgba(208, 119, 65, 0.16), rgba(255, 255, 255, 0.03));
+  }
+
+  .mode-tab strong {
+    display: block;
+    font-size: 16px;
+    font-family: "SF Pro Display", "PingFang SC", sans-serif;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .mode-tab span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .sidebar-foot {
+    padding: 18px 22px 22px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .content {
+    min-width: 0;
+    padding: 18px;
+  }
+
+  .content-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
+  }
+
+  .topbar-title {
+    font-family: "SF Pro Display", "PingFang SC", sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .topbar-title strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--text);
+    font-size: 20px;
+  }
+
+  .topbar-meta {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .workspace {
+    max-width: 1380px;
   }
 
   .hero {
@@ -85,7 +239,7 @@ const css = `
 
   .panel {
     background: var(--panel);
-    border: 1px solid rgba(255, 255, 255, 0.66);
+    border: 1px solid var(--line);
     backdrop-filter: blur(14px);
     box-shadow: var(--shadow);
     border-radius: 24px;
@@ -103,7 +257,7 @@ const css = `
     inset: auto -48px -80px auto;
     width: 180px;
     height: 180px;
-    background: radial-gradient(circle, rgba(199, 104, 53, 0.22), transparent 68%);
+    background: radial-gradient(circle, rgba(208, 119, 65, 0.22), transparent 68%);
   }
 
   .eyebrow {
@@ -114,7 +268,8 @@ const css = `
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--accent-strong);
-    background: rgba(199, 104, 53, 0.12);
+    background: rgba(208, 119, 65, 0.12);
+    font-family: "SF Pro Display", "PingFang SC", sans-serif;
   }
 
   h1 {
@@ -167,51 +322,6 @@ const css = `
     padding: 14px;
   }
 
-  .mode-switcher {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-
-  .mode-tab {
-    flex: 1 1 0;
-    min-width: 0;
-    border: 1px solid var(--line);
-    border-radius: 22px;
-    padding: 18px 20px;
-    background: rgba(255, 251, 245, 0.68);
-    color: var(--text);
-    cursor: pointer;
-    text-align: left;
-    transition: 180ms ease;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  }
-
-  .mode-tab strong {
-    display: block;
-    font-size: 18px;
-    margin-bottom: 6px;
-  }
-
-  .mode-tab span {
-    display: block;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .mode-tab.active {
-    border-color: rgba(199, 104, 53, 0.28);
-    background:
-      radial-gradient(circle at top right, rgba(199, 104, 53, 0.16), transparent 34%),
-      linear-gradient(135deg, rgba(31, 111, 120, 0.14), rgba(255, 251, 245, 0.96) 44%);
-    box-shadow: var(--shadow);
-  }
-
-  .mode-tab.active strong {
-    color: var(--accent-strong);
-  }
-
   .tabs {
     display: flex;
     flex-wrap: wrap;
@@ -222,10 +332,11 @@ const css = `
     border: 0;
     border-radius: 999px;
     padding: 10px 14px;
-    background: rgba(31, 41, 55, 0.06);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text);
     cursor: pointer;
     transition: 150ms ease;
+    font-family: "SF Pro Display", "PingFang SC", sans-serif;
   }
 
   .tab.active {
@@ -244,7 +355,8 @@ const css = `
     padding: 12px 14px;
     border-radius: 14px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
     outline: none;
   }
 
@@ -383,7 +495,7 @@ const css = `
     padding: 12px 14px;
     border-radius: 16px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.56);
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .metric-item header {
@@ -455,7 +567,7 @@ const css = `
   .rating-card {
     border-radius: 20px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .record-card,
@@ -500,17 +612,17 @@ const css = `
     padding: 14px;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .message-card.user {
     border-color: rgba(31, 111, 120, 0.2);
-    background: rgba(31, 111, 120, 0.08);
+    background: rgba(63, 155, 161, 0.08);
   }
 
   .message-card.assistant {
     border-color: rgba(199, 104, 53, 0.2);
-    background: rgba(199, 104, 53, 0.08);
+    background: rgba(208, 119, 65, 0.08);
   }
 
   .message-head {
@@ -564,7 +676,8 @@ const css = `
     padding: 10px 12px;
     border-radius: 12px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.84);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
     outline: none;
     resize: vertical;
   }
@@ -599,6 +712,15 @@ const css = `
   }
 
   @media (max-width: 920px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: static;
+      min-height: auto;
+    }
+
     .hero,
     .layout,
     .qualitative-layout {
@@ -607,10 +729,6 @@ const css = `
 
     .search {
       margin-left: 0;
-    }
-
-    .mode-switcher {
-      flex-direction: column;
     }
 
     .qualitative-sidebar {
@@ -954,6 +1072,60 @@ function App() {
     <>
       <style>{css}</style>
       <main className="app">
+        <aside className="sidebar">
+          <div className="sidebar-head">
+            <div className="brand">
+              <div>
+                <div className="brand-mark">T</div>
+                <h2>Arena</h2>
+              </div>
+              <div className="brand-badge">Battle Mode</div>
+            </div>
+            <p className="sidebar-copy">
+              教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。
+            </p>
+          </div>
+          <nav className="sidebar-nav">
+            <div className="mode-switcher">
+              {APP_SECTIONS.map((section) => (
+                <button
+                  key={section.key}
+                  className={`mode-tab ${activeSection === section.key ? "active" : ""}`}
+                  onClick={() => setActiveSection(section.key)}
+                  type="button"
+                >
+                  <strong>{section.label}</strong>
+                  <span>{section.note}</span>
+                </button>
+              ))}
+            </div>
+            <div className="sidebar-group">
+              <div className="sidebar-label">Current View</div>
+              <button className="mode-tab" type="button">
+                <strong>{activeSection === "leaderboard" ? "Model Ranking" : "Message Review"}</strong>
+                <span>{activeSection === "leaderboard" ? labelFor(activeView) : "单条对话评分工作台"}</span>
+              </button>
+            </div>
+          </nav>
+          <div className="sidebar-foot">hi_react_cc · local workspace</div>
+        </aside>
+
+        <section className="content">
+          <div className="content-topbar">
+            <div className="topbar-title">
+              {activeSection === "leaderboard" ? "Leaderboard Workspace" : "Qualitative Workspace"}
+              <strong>{activeSection === "leaderboard" ? "教学能力与通用基准榜单" : "质性对话评审"}</strong>
+            </div>
+            <div className="topbar-meta">
+              {activeSection === "leaderboard"
+                ? `${models.length || 0} models loaded`
+                : record
+                  ? `${record.messages.length} messages`
+                  : "loading"}
+            </div>
+          </div>
+
+          <div className="workspace">
         <section className="hero">
           <div className="panel hero-copy">
             <span className="eyebrow">llm leaderboard</span>
@@ -981,20 +1153,6 @@ function App() {
               <strong>{foreignCount}</strong>
             </div>
           </div>
-        </section>
-
-        <section className="mode-switcher">
-          {APP_SECTIONS.map((section) => (
-            <button
-              key={section.key}
-              className={`mode-tab ${activeSection === section.key ? "active" : ""}`}
-              onClick={() => setActiveSection(section.key)}
-              type="button"
-            >
-              <strong>{section.label}</strong>
-              <span>{section.note}</span>
-            </button>
-          ))}
         </section>
 
         {activeSection === "leaderboard" ? (
@@ -1274,6 +1432,8 @@ function App() {
             )}
           </section>
         )}
+          </div>
+        </section>
       </main>
     </>
   );
