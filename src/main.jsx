@@ -564,15 +564,45 @@ const css = `
 
   .record-card,
   .conversation-panel,
-  .rating-card {
+  .rating-card,
+  .stats-card {
     border-radius: 20px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.03);
   }
 
   .record-card,
-  .rating-card {
+  .rating-card,
+  .stats-card {
     padding: 16px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .stats-item {
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .stats-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .stats-item strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.04em;
   }
 
   .conversation-panel {
@@ -895,6 +925,7 @@ function App() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [record, setRecord] = useState(null);
   const [savedScoreFile, setSavedScoreFile] = useState(null);
+  const [ratingFolderSummary, setRatingFolderSummary] = useState(null);
   const [ratings, setRatings] = useState(createEmptyRatings(null));
   const [saveState, setSaveState] = useState("");
 
@@ -977,6 +1008,21 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    async function loadRatingFolderSummary() {
+      const response = await fetch("/api/qualitative-ratings-folder");
+      if (!response.ok) {
+        throw new Error(`folder summary failed:${response.status}`);
+      }
+      const summary = await response.json();
+      setRatingFolderSummary(summary);
+    }
+
+    loadRatingFolderSummary().catch(() => {
+      setRatingFolderSummary(null);
+    });
+  }, []);
+
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return models.filter((model) => {
@@ -1008,6 +1054,12 @@ function App() {
   const leader = ranked[0];
   const domesticCount = models.filter((item) => item.note.includes("国内")).length;
   const foreignCount = models.filter((item) => item.note.includes("国外")).length;
+  const ratingSummary = useMemo(() => {
+    return {
+      count: ratingFolderSummary?.fileCount ?? 0,
+      averageOverall: ratingFolderSummary?.averageOverall ?? null,
+    };
+  }, [ratingFolderSummary]);
 
   function updateOverview(field, value) {
     setRatings((current) => ({
@@ -1054,6 +1106,13 @@ function App() {
       const savedFile = await response.json();
       writeLocalRatings(savedFile);
       setSavedScoreFile(savedFile);
+      try {
+        const folderResponse = await fetch("/api/qualitative-ratings-folder");
+        if (folderResponse.ok) {
+          const folderSummary = await folderResponse.json();
+          setRatingFolderSummary(folderSummary);
+        }
+      } catch {}
       setSaveState("评分已保存到服务器端 JSON 文件。");
     } catch (error) {
       writeLocalRatings(nextFile);
@@ -1306,6 +1365,23 @@ function App() {
             {record ? (
               <div className="qualitative-layout">
                 <div className="qualitative-sidebar">
+                  <article className="stats-card">
+                    <div className="section-title">
+                      <h3>评分概览</h3>
+                      <span>已保存统计</span>
+                    </div>
+                    <div className="stats-grid">
+                      <div className="stats-item">
+                        <span>当前 rating 数</span>
+                        <strong>{ratingSummary.count}</strong>
+                      </div>
+                      <div className="stats-item">
+                        <span>总体平均分</span>
+                        <strong>{formatScore(ratingSummary.averageOverall, 1)}</strong>
+                      </div>
+                    </div>
+                  </article>
+
                   <article className="rating-card">
                     <div className="section-title">
                       <h3>整体评分</h3>

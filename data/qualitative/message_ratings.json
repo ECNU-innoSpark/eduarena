@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "savedAt": "2026-03-17T15:42:13.886Z",
+  "savedAt": "2026-03-18T03:08:58.497Z",
   "records": {
     "student_1_q1": {
       "record_id": "student_1_q1",
       "scenario": "小学应用题思路引导师",
       "question": "老师，为什么这道题要先算总数，而不是直接除？",
       "turn_count": 4,
-      "updatedAt": "2026-03-17T15:42:13.886Z",
+      "updatedAt": "2026-03-18T03:08:58.497Z",
       "overview": {
-        "overall": 0.5,
+        "overall": 1,
         "pedagogy": 0.5,
-        "accuracy": 0.5,
+        "accuracy": 1,
         "engagement": 1,
         "note": ""
       }
