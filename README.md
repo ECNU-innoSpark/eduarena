@@ -16,6 +16,18 @@ npm install
 npm run dev
 ```
 
+如果需要同时启动前端和本地评分 API：
+
+```bash
+npm start
+```
+
+Windows 下可直接运行：
+
+```bat
+start.cmd
+```
+
 ## 构建
 
 ```bash
