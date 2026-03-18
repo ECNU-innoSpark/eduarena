@@ -701,6 +701,7 @@ const css = `
   }
 
   .field input,
+  .field select,
   .field textarea {
     width: 100%;
     padding: 10px 12px;
@@ -871,6 +872,35 @@ function clampRating(value) {
   return Math.max(0, Math.min(5, num));
 }
 
+function fileBaseName(fileName) {
+  return (fileName || "").replace(/\.json$/i, "");
+}
+
+function normalizeQualitativeRecord(source, fileName = "") {
+  const messages = Array.isArray(source?.messages) ? source.messages : [];
+  const firstUserMessage = messages.find((message) => message?.role === "user")?.content ?? "";
+
+  return {
+    ...source,
+    record_id: source?.record_id ?? (fileBaseName(fileName) || "qualitative-record"),
+    scenario: source?.scenario ?? source?.subject ?? source?.metadata?.scenario_name ?? source?.teacher_agent ?? "未提供",
+    question:
+      source?.question
+      ?? source?.student_agent?.profile_summary?.original_question
+      ?? firstUserMessage
+      ?? source?.name
+      ?? "未提供",
+    intent: source?.intent ?? source?.question_type ?? source?.dialogue_mode ?? "未提供",
+    difficulty:
+      source?.difficulty
+      ?? source?.student_agent?.profile_summary?.grade_or_age
+      ?? source?.profile?.grade_level
+      ?? "未提供",
+    turn_count: source?.turn_count ?? messages.length ?? 0,
+    messages,
+  };
+}
+
 function createEmptyRatings(record) {
   return {
     overview: {
@@ -923,6 +953,8 @@ function App() {
   const [activeSection, setActiveSection] = useState("qualitative");
   const [activeView, setActiveView] = useState("overall");
   const [selectedModel, setSelectedModel] = useState(null);
+  const [messageOptions, setMessageOptions] = useState([]);
+  const [selectedMessageFile, setSelectedMessageFile] = useState("");
   const [record, setRecord] = useState(null);
   const [savedScoreFile, setSavedScoreFile] = useState(null);
   const [ratingFolderSummary, setRatingFolderSummary] = useState(null);
@@ -966,9 +998,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    async function loadQualitative() {
-      const recordResponse = await fetch("/data/qualitative/records.json");
-      const nextRecord = await recordResponse.json();
+    async function loadRatings() {
       let scoreFile = readLocalRatings() ?? { version: 1, records: {} };
       let scoreSource = scoreFile.records && Object.keys(scoreFile.records).length ? "local" : "empty";
 
@@ -995,18 +1025,65 @@ function App() {
         }
       }
 
-      setRecord(nextRecord);
       setSavedScoreFile(scoreFile);
-      setRatings(normalizeRatings(nextRecord, scoreFile));
       if (scoreSource === "local") {
         setSaveState("未检测到保存接口，已加载浏览器中的本地评分缓存。");
       }
     }
 
-    loadQualitative().catch(() => {
-      setSaveState("质性记录加载失败，请检查数据文件路径。");
+    loadRatings().catch(() => {
+      setSaveState("评分文件加载失败，请检查数据文件路径。");
     });
   }, []);
+
+  useEffect(() => {
+    async function loadMessageOptions() {
+      const response = await fetch("/api/qualitative-messages");
+      if (!response.ok) {
+        throw new Error(`message options failed:${response.status}`);
+      }
+
+      const items = await response.json();
+      setMessageOptions(items);
+      if (items[0]?.fileName) {
+        setSelectedMessageFile(items[0].fileName);
+      }
+    }
+
+    loadMessageOptions().catch(async () => {
+      setMessageOptions([]);
+      setSelectedMessageFile("");
+      try {
+        const response = await fetch("/data/qualitative/records.json");
+        const fallbackRecord = normalizeQualitativeRecord(await response.json(), "records.json");
+        setRecord(fallbackRecord);
+      } catch {
+        setSaveState("质性记录加载失败，请检查数据文件路径。");
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMessageFile) return;
+
+    async function loadSelectedRecord() {
+      const response = await fetch(`/data/qualitative/messages/${selectedMessageFile}`);
+      if (!response.ok) {
+        throw new Error(`record failed:${response.status}`);
+      }
+
+      const nextRecord = normalizeQualitativeRecord(await response.json(), selectedMessageFile);
+      setRecord(nextRecord);
+    }
+
+    loadSelectedRecord().catch(() => {
+      setSaveState(`消息文件加载失败：${selectedMessageFile}`);
+    });
+  }, [selectedMessageFile]);
+
+  useEffect(() => {
+    setRatings(normalizeRatings(record, savedScoreFile));
+  }, [record, savedScoreFile]);
 
   useEffect(() => {
     async function loadRatingFolderSummary() {
@@ -1457,6 +1534,21 @@ function App() {
                       <h3>记录信息</h3>
                       <span>{record.record_id}</span>
                     </div>
+                    {messageOptions.length ? (
+                      <label className="field" style={{ marginBottom: 16 }}>
+                        <span>选择消息文件</span>
+                        <select
+                          value={selectedMessageFile}
+                          onChange={(event) => setSelectedMessageFile(event.target.value)}
+                        >
+                          {messageOptions.map((item) => (
+                            <option key={item.fileName} value={item.fileName}>
+                              {item.fileName} · {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                     <div className="record-meta">
                       <div className="meta-row">
                         <span>场景</span>
@@ -1483,7 +1575,7 @@ function App() {
                 <article className="conversation-panel">
                   <div className="section-title">
                     <h3>Messages</h3>
-                    <span>{record.messages.length} 条消息</span>
+                    <span>{selectedMessageFile || record.record_id} · {record.messages.length} 条消息</span>
                   </div>
                   <div className="conversation-list">
                     {record.messages.map((message, index) => {

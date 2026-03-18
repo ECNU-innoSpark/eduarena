@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ratingsFile = path.resolve(__dirname, "data/qualitative/message_ratings.json");
 const ratingsDir = path.resolve(__dirname, "data/qualitative/message_ratings");
+const messagesDir = path.resolve(__dirname, "data/qualitative/messages");
 
 function summarizeRecords(records) {
   const keys = Object.keys(records ?? {});
@@ -62,6 +63,34 @@ async function readRatingsSnapshots() {
       }),
     );
     return snapshots;
+  } catch {
+    return [];
+  }
+}
+
+async function readMessageOptions() {
+  try {
+    const names = (await readdir(messagesDir))
+      .filter((name) => name.endsWith(".json"))
+      .sort();
+
+    const items = await Promise.all(
+      names.map(async (name) => {
+        const filePath = path.join(messagesDir, name);
+        const content = await readFile(filePath, "utf8");
+        const data = JSON.parse(content);
+        const fallbackQuestion = data.messages?.find((message) => message?.role === "user")?.content ?? "";
+        return {
+          fileName: name,
+          recordId: data.record_id ?? name.replace(/\.json$/i, ""),
+          label: data.question ?? data.name ?? (fallbackQuestion.slice(0, 80) || name),
+          scenario: data.scenario ?? data.subject ?? data.metadata?.scenario_name ?? data.teacher_agent ?? "",
+          turnCount: data.turn_count ?? data.messages?.length ?? 0,
+        };
+      }),
+    );
+
+    return items;
   } catch {
     return [];
   }
@@ -229,12 +258,35 @@ async function handleRatingsFolderApi(req, res) {
   return true;
 }
 
+async function handleMessageOptionsApi(req, res) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  if (req.method === "GET") {
+    const items = await readMessageOptions();
+    console.log("[messages:list:get]", {
+      dir: messagesDir,
+      count: items.length,
+      files: items.map((item) => item.fileName),
+    });
+    res.end(JSON.stringify(items));
+    return true;
+  }
+
+  res.statusCode = 405;
+  res.end(JSON.stringify({ error: "Method not allowed" }));
+  return true;
+}
+
 async function start() {
   const host = getArg("--host", process.env.HOST || "127.0.0.1");
   const port = Number(getArg("--port", process.env.API_PORT || process.env.PORT || "5174"));
 
   const server = http.createServer(async (req, res) => {
     try {
+      if (req.url?.startsWith("/api/qualitative-messages")) {
+        await handleMessageOptionsApi(req, res);
+        return;
+      }
       if (req.url?.startsWith("/api/qualitative-ratings-folder")) {
         await handleRatingsFolderApi(req, res);
         return;
