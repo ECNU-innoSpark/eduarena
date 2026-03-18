@@ -2,6 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  clampRating,
+  createEmptyRatings,
+  formatScore,
+  normalizeQualitativeRecord,
+  normalizeRatings,
+  parseCsv,
+  parseNumber,
+  sliderValue,
+} from "./qualitativeUtils";
 
 const QUALITY_METRICS = [
   { key: "knowledge", label: "知识点讲解", max: 5 },
@@ -901,53 +911,6 @@ const css = `
   }
 `;
 
-function parseNumber(value) {
-  if (!value) return null;
-  const cleaned = value.replace(/\?/g, "").trim();
-  if (!cleaned) return null;
-  const num = Number(cleaned);
-  return Number.isFinite(num) ? num : null;
-}
-
-function parseCsv(text) {
-  const rows = [];
-  let current = "";
-  let row = [];
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    const next = text[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === "," && !inQuotes) {
-      row.push(current);
-      current = "";
-    } else if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (char === "\r" && next === "\n") i += 1;
-      row.push(current);
-      if (row.some((item) => item.trim() !== "")) rows.push(row);
-      row = [];
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.length || row.length) {
-    row.push(current);
-    if (row.some((item) => item.trim() !== "")) rows.push(row);
-  }
-
-  return rows;
-}
-
 function scoreValue(model, key) {
   if (key === "overall") {
     const values = [model.qualityAvg, model.benchmarkAvg].filter(
@@ -968,75 +931,6 @@ function scoreMax(key) {
 function labelFor(key) {
   if (key === "overall") return "综合得分";
   return VIEW_OPTIONS.find((item) => item.key === key)?.label ?? key;
-}
-
-function formatScore(value, digits = 2) {
-  return value == null ? "--" : value.toFixed(digits).replace(/\.00$/, "");
-}
-
-function clampRating(value) {
-  if (value === "") return "";
-  const num = Number(value);
-  if (!Number.isFinite(num)) return "";
-  return Math.max(0, Math.min(5, num));
-}
-
-function sliderValue(value) {
-  return value === "" ? 0 : Number(value);
-}
-
-function fileBaseName(fileName) {
-  return (fileName || "").replace(/\.json$/i, "");
-}
-
-function normalizeQualitativeRecord(source, fileName = "") {
-  const messages = Array.isArray(source?.messages) ? source.messages : [];
-  const firstUserMessage = messages.find((message) => message?.role === "user")?.content ?? "";
-
-  return {
-    ...source,
-    record_id: source?.record_id ?? (fileBaseName(fileName) || "qualitative-record"),
-    scenario: source?.scenario ?? source?.subject ?? source?.metadata?.scenario_name ?? source?.teacher_agent ?? "未提供",
-    question:
-      source?.question
-      ?? source?.student_agent?.profile_summary?.original_question
-      ?? firstUserMessage
-      ?? source?.name
-      ?? "未提供",
-    intent: source?.intent ?? source?.question_type ?? source?.dialogue_mode ?? "未提供",
-    difficulty:
-      source?.difficulty
-      ?? source?.student_agent?.profile_summary?.grade_or_age
-      ?? source?.profile?.grade_level
-      ?? "未提供",
-    turn_count: source?.turn_count ?? messages.length ?? 0,
-    messages,
-  };
-}
-
-function createEmptyRatings(record) {
-  return {
-    overview: {
-      overall: "",
-      pedagogy: "",
-      accuracy: "",
-      engagement: "",
-      note: "",
-    },
-  };
-}
-
-function normalizeRatings(record, savedData) {
-  const empty = createEmptyRatings(record);
-  const savedRecord = savedData?.records?.[record?.record_id];
-  if (!savedRecord) return empty;
-
-  return {
-    overview: {
-      ...empty.overview,
-      ...(savedRecord.overview ?? {}),
-    },
-  };
 }
 
 function readLocalRatings() {
