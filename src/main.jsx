@@ -690,6 +690,19 @@ const css = `
     gap: 10px;
   }
 
+  .slider-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .slider-value {
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
   .field {
     display: grid;
     gap: 6px;
@@ -711,6 +724,14 @@ const css = `
     color: var(--text);
     outline: none;
     resize: vertical;
+  }
+
+  .field input[type="range"] {
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    accent-color: var(--accent);
   }
 
   .save-row {
@@ -870,6 +891,10 @@ function clampRating(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
   return Math.max(0, Math.min(5, num));
+}
+
+function sliderValue(value) {
+  return value === "" ? 0 : Number(value);
 }
 
 function fileBaseName(fileName) {
@@ -1212,10 +1237,10 @@ function App() {
           <div className="sidebar-head">
             <div className="brand">
               <div>
-                <div className="brand-mark">T</div>
-                <h2>Arena</h2>
+                {/*<div className="brand-mark">T</div>*/}
+                <h2>EduArena</h2>
               </div>
-              <div className="brand-badge">Battle Mode</div>
+              {/*<div className="brand-badge">Battle Mode</div>*/}
             </div>
             <p className="sidebar-copy">
               教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。
@@ -1465,50 +1490,62 @@ function App() {
                       <span>0-5 分</span>
                     </div>
                     <div className="rating-grid">
-                      <label className="field">
-                        <span>总体评价</span>
-                        <input
-                          max="5"
-                          min="0"
-                          step="0.5"
-                          type="number"
-                          value={ratings.overview.overall}
-                          onChange={(event) => updateOverview("overall", event.target.value)}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>教学引导</span>
-                        <input
-                          max="5"
-                          min="0"
-                          step="0.5"
-                          type="number"
-                          value={ratings.overview.pedagogy}
-                          onChange={(event) => updateOverview("pedagogy", event.target.value)}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>答案准确性</span>
-                        <input
-                          max="5"
-                          min="0"
-                          step="0.5"
-                          type="number"
-                          value={ratings.overview.accuracy}
-                          onChange={(event) => updateOverview("accuracy", event.target.value)}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>互动启发性</span>
-                        <input
-                          max="5"
-                          min="0"
-                          step="0.5"
-                          type="number"
-                          value={ratings.overview.engagement}
-                          onChange={(event) => updateOverview("engagement", event.target.value)}
-                        />
-                      </label>
+	                      <label className="field">
+	                        <div className="slider-head">
+	                          <span>总体评价</span>
+	                          <strong className="slider-value">{ratings.overview.overall === "" ? "--" : ratings.overview.overall}</strong>
+	                        </div>
+	                        <input
+	                          max="5"
+	                          min="0"
+	                          step="0.5"
+	                          type="range"
+	                          value={sliderValue(ratings.overview.overall)}
+	                          onChange={(event) => updateOverview("overall", event.target.value)}
+	                        />
+	                      </label>
+	                      <label className="field">
+	                        <div className="slider-head">
+	                          <span>教学引导</span>
+	                          <strong className="slider-value">{ratings.overview.pedagogy === "" ? "--" : ratings.overview.pedagogy}</strong>
+	                        </div>
+	                        <input
+	                          max="5"
+	                          min="0"
+	                          step="0.5"
+	                          type="range"
+	                          value={sliderValue(ratings.overview.pedagogy)}
+	                          onChange={(event) => updateOverview("pedagogy", event.target.value)}
+	                        />
+	                      </label>
+	                      <label className="field">
+	                        <div className="slider-head">
+	                          <span>答案准确性</span>
+	                          <strong className="slider-value">{ratings.overview.accuracy === "" ? "--" : ratings.overview.accuracy}</strong>
+	                        </div>
+	                        <input
+	                          max="5"
+	                          min="0"
+	                          step="0.5"
+	                          type="range"
+	                          value={sliderValue(ratings.overview.accuracy)}
+	                          onChange={(event) => updateOverview("accuracy", event.target.value)}
+	                        />
+	                      </label>
+	                      <label className="field">
+	                        <div className="slider-head">
+	                          <span>互动启发性</span>
+	                          <strong className="slider-value">{ratings.overview.engagement === "" ? "--" : ratings.overview.engagement}</strong>
+	                        </div>
+	                        <input
+	                          max="5"
+	                          min="0"
+	                          step="0.5"
+	                          type="range"
+	                          value={sliderValue(ratings.overview.engagement)}
+	                          onChange={(event) => updateOverview("engagement", event.target.value)}
+	                        />
+	                      </label>
                     </div>
                     <label className="field" style={{ marginTop: 10 }}>
                       <span>整体备注</span>
