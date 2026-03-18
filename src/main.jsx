@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const QUALITY_METRICS = [
   { key: "knowledge", label: "知识点讲解", max: 5 },
@@ -678,10 +680,96 @@ const css = `
 
   .message-body {
     margin: 0;
-    white-space: pre-wrap;
     word-break: break-word;
     line-height: 1.7;
     font-size: 14px;
+  }
+
+  .message-body > :first-child {
+    margin-top: 0;
+  }
+
+  .message-body > :last-child {
+    margin-bottom: 0;
+  }
+
+  .message-body p,
+  .message-body ul,
+  .message-body ol,
+  .message-body table,
+  .message-body blockquote,
+  .message-body pre,
+  .message-body hr {
+    margin: 0 0 12px;
+  }
+
+  .message-body h1,
+  .message-body h2,
+  .message-body h3,
+  .message-body h4 {
+    margin: 18px 0 10px;
+    line-height: 1.3;
+  }
+
+  .message-body ul,
+  .message-body ol {
+    padding-left: 20px;
+  }
+
+  .message-body li + li {
+    margin-top: 4px;
+  }
+
+  .message-body code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    font-family: "SFMono-Regular", "SF Mono", "Consolas", monospace;
+    font-size: 0.92em;
+  }
+
+  .message-body pre {
+    overflow-x: auto;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .message-body pre code {
+    padding: 0;
+    background: transparent;
+  }
+
+  .message-body table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+
+  .message-body th,
+  .message-body td {
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .message-body th {
+    color: var(--accent-strong);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .message-body hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .message-body blockquote {
+    padding-left: 14px;
+    border-left: 3px solid rgba(255, 255, 255, 0.18);
+    color: var(--muted);
   }
 
   .rating-grid {
@@ -1625,7 +1713,11 @@ function App() {
                             <div className="message-role">{message.role || "unknown"}</div>
                             <div className="message-index">#{index + 1}</div>
                           </div>
-                          <p className="message-body">{message.content || ""}</p>
+                          <div className="message-body">
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                              {message.content || ""}
+                            </Markdown>
+                          </div>
                         </div>
                       );
                     })}
