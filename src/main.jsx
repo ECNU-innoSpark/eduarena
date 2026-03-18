@@ -34,8 +34,8 @@ const VIEW_OPTIONS = [
 ];
 
 const APP_SECTIONS = [
-  { key: "leaderboard", label: "Leaderboard", note: "教学能力与通用基准双轴榜单" },
   { key: "qualitative", label: "Qualitative Review", note: "对话 messages 与人工评分" },
+  { key: "leaderboard", label: "Leaderboard", note: "教学能力与通用基准双轴榜单" },
 ];
 
 const LOCAL_RATINGS_KEY = "hi-react-cc.qualitative-ratings";
@@ -890,7 +890,7 @@ function writeLocalRatings(data) {
 function App() {
   const [models, setModels] = useState([]);
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState("leaderboard");
+  const [activeSection, setActiveSection] = useState("qualitative");
   const [activeView, setActiveView] = useState("overall");
   const [selectedModel, setSelectedModel] = useState(null);
   const [record, setRecord] = useState(null);
