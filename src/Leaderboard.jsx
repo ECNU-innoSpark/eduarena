@@ -1,5 +1,5 @@
-import React from "react";
-import { formatScore } from "./qualitativeUtils";
+import React, { useEffect, useMemo, useState } from "react";
+import { formatScore, parseCsv, parseNumber } from "./qualitativeUtils";
 
 // Python equivalent:
 // QUALITY_METRICS = [
@@ -112,6 +112,85 @@ export function scoreMax(key) {
 export function labelFor(key) {
   if (key === "overall") return "综合得分";
   return VIEW_OPTIONS.find((item) => item.key === key)?.label ?? key;
+}
+
+export function useLeaderboardData({ activeView, query }) {
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      const response = await fetch("/data/quantitive/main_experiments.csv");
+      const text = await response.text();
+      const rows = parseCsv(text.replace(/^\uFEFF/, ""));
+      const items = rows.slice(1).map((cols) => ({
+        name: cols[0]?.trim() ?? "",
+        version: cols[1]?.trim() ?? "",
+        note: cols[2]?.trim() ?? "",
+        knowledge: parseNumber(cols[3]),
+        guided: parseNumber(cols[4]),
+        crossDiscipline: parseNumber(cols[5]),
+        scenario: parseNumber(cols[6]),
+        qualityAvg: parseNumber(cols[7]),
+        mmluPro: parseNumber(cols[8]),
+        math: parseNumber(cols[9]),
+        ifeval: parseNumber(cols[10]),
+        ceval: parseNumber(cols[11]),
+        humaneval: parseNumber(cols[12]),
+        lcbCode: parseNumber(cols[13]),
+        aime2024: parseNumber(cols[14]),
+        simpleQa: parseNumber(cols[15]),
+        chineseSimpleQa: parseNumber(cols[16]),
+        benchmarkAvg: parseNumber(cols[17]),
+        instruction: parseNumber(cols[18]),
+        worldKnowledge: parseNumber(cols[19]),
+        reasoning: parseNumber(cols[20]),
+      }));
+
+      setModels(items);
+      setSelectedModel(items[0] ?? null);
+    }
+
+    load();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return models.filter((model) => {
+      if (!normalized) return true;
+      return [model.name, model.note, model.version]
+        .filter(Boolean)
+        .some((item) => item.toLowerCase().includes(normalized));
+    });
+  }, [models, query]);
+
+  const ranked = useMemo(() => {
+    return [...filtered]
+      .map((model) => ({ ...model, activeScore: scoreValue(model, activeView) }))
+      .filter((model) => model.activeScore != null)
+      .sort((a, b) => b.activeScore - a.activeScore);
+  }, [filtered, activeView]);
+
+  useEffect(() => {
+    if (!ranked.length) {
+      setSelectedModel(null);
+      return;
+    }
+
+    if (!selectedModel || !ranked.some((model) => model.name === selectedModel.name)) {
+      setSelectedModel(ranked[0]);
+    }
+  }, [ranked, selectedModel]);
+
+  return {
+    domesticCount: models.filter((item) => item.note.includes("国内")).length,
+    foreignCount: models.filter((item) => item.note.includes("国外")).length,
+    leader: ranked[0],
+    models,
+    ranked,
+    selectedModel,
+    setSelectedModel,
+  };
 }
 
 function MetricItem({ label, value, max }) {
