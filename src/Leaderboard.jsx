@@ -383,3 +383,36 @@ export function Leaderboard({
     </>
   );
 }
+
+export function LeaderboardWorkspace({
+  activeView,
+  query,
+  setActiveView,
+  setQuery,
+}) {
+  const {
+    domesticCount,
+    foreignCount,
+    leader,
+    models,
+    ranked,
+    selectedModel,
+    setSelectedModel,
+  } = useLeaderboardData({ activeView, query });
+
+  return (
+    <Leaderboard
+      activeView={activeView}
+      domesticCount={domesticCount}
+      foreignCount={foreignCount}
+      leader={leader}
+      models={models}
+      query={query}
+      ranked={ranked}
+      selectedModel={selectedModel}
+      setActiveView={setActiveView}
+      setQuery={setQuery}
+      setSelectedModel={setSelectedModel}
+    />
+  );
+}

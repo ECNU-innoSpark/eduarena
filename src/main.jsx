@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Annotation, WorkspaceTopbar } from "./Annotation";
 import {
-  Leaderboard,
+  LeaderboardWorkspace,
   labelFor,
-  useLeaderboardData,
 } from "./Leaderboard";
 
 const APP_SECTIONS = [
@@ -875,15 +874,6 @@ function App() {
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState("qualitative");
   const [activeView, setActiveView] = useState("overall");
-  const {
-    domesticCount,
-    foreignCount,
-    leader,
-    models,
-    ranked,
-    selectedModel,
-    setSelectedModel,
-  } = useLeaderboardData({ activeView, query });
 
   return (
     <>
@@ -928,21 +918,15 @@ function App() {
         </aside>
 
         <section className="content">
+          <WorkspaceTopbar activeSection={activeSection} />
 
           <div className="workspace">
         {activeSection === "leaderboard" ? (
-          <Leaderboard
+          <LeaderboardWorkspace
             activeView={activeView}
-            domesticCount={domesticCount}
-            foreignCount={foreignCount}
-            leader={leader}
-            models={models}
             query={query}
-            ranked={ranked}
-            selectedModel={selectedModel}
             setActiveView={setActiveView}
             setQuery={setQuery}
-            setSelectedModel={setSelectedModel}
           />
         ) : (
           <Annotation />
