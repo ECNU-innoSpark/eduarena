@@ -1,6 +1,262 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { formatScore, parseCsv, parseNumber } from "./qualitativeUtils";
 
+export const LEADERBOARD_CSS = `
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 22px;
+  }
+
+  .hero-copy {
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-copy::after {
+    content: "";
+    position: absolute;
+    inset: auto -48px -80px auto;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(208, 119, 65, 0.22), transparent 68%);
+  }
+
+  h1 {
+    margin: 14px 0 10px;
+    font-size: clamp(32px, 5vw, 64px);
+    line-height: 0.94;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-copy p {
+    margin: 0;
+    max-width: 54ch;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 20px;
+  }
+
+  .stat-card {
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+  }
+
+  .stat-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .stat-card span {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tab {
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    cursor: pointer;
+    transition: 150ms ease;
+    font-family: "SF Pro Display", "PingFang SC", sans-serif;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .search {
+    margin-left: auto;
+    min-width: min(100%, 240px);
+    flex: 1 1 240px;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    outline: none;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.9fr);
+    gap: 18px;
+  }
+
+  .chart-panel,
+  .detail-panel {
+    padding: 18px;
+  }
+
+  .bars {
+    display: grid;
+    gap: 12px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) 74px;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .bar-label {
+    min-width: 0;
+  }
+
+  .bar-label strong {
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-label span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .bar-track {
+    position: relative;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(31, 41, 55, 0.08);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--cool), var(--accent));
+  }
+
+  .bar-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+  }
+
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .detail-header h3 {
+    margin: 0 0 6px;
+    font-size: 24px;
+  }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .score-card {
+    padding: 14px;
+    border-radius: 16px;
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+  }
+
+  .score-card span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .score-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 22px;
+  }
+
+  .metric-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .metric-item {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .metric-item header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .metric-item header span:last-child {
+    color: var(--muted);
+  }
+
+  @media (max-width: 920px) {
+    .hero,
+    .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .search {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .bar-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .score-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`;
+
 // Python equivalent:
 // QUALITY_METRICS = [
 //     {"key": "knowledge", "label": "知识点讲解", "max": 5},
