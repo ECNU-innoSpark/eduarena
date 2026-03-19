@@ -2,3 +2,4 @@ node_modules
 dist
 data/qualitative/message_ratings/*.json
 .DS_Store
+*.pyc

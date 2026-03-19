@@ -1,6 +1,14 @@
 import React from "react";
 import { formatScore } from "./qualitativeUtils";
 
+// Python equivalent:
+// QUALITY_METRICS = [
+//     {"key": "knowledge", "label": "知识点讲解", "max": 5},
+//     {"key": "guided", "label": "引导式讲题", "max": 5},
+//     {"key": "crossDiscipline", "label": "跨学科教案", "max": 5},
+//     {"key": "scenario", "label": "情景化出题", "max": 5},
+//     {"key": "qualityAvg", "label": "教学平均分", "max": 5},
+// ]
 export const QUALITY_METRICS = [
   { key: "knowledge", label: "知识点讲解", max: 5 },
   { key: "guided", label: "引导式讲题", max: 5 },
@@ -9,6 +17,22 @@ export const QUALITY_METRICS = [
   { key: "qualityAvg", label: "教学平均分", max: 5 },
 ];
 
+// Python equivalent:
+// BENCHMARK_METRICS = [
+//     {"key": "mmluPro", "label": "MMLU-Pro", "max": 100},
+//     {"key": "math", "label": "Math", "max": 100},
+//     {"key": "ifeval", "label": "IFEval", "max": 100},
+//     {"key": "ceval", "label": "CEval", "max": 100},
+//     {"key": "humaneval", "label": "HumanEval", "max": 100},
+//     {"key": "lcbCode", "label": "LCB Code", "max": 100},
+//     {"key": "aime2024", "label": "AIME 2024", "max": 100},
+//     {"key": "simpleQa", "label": "SimpleQA", "max": 100},
+//     {"key": "chineseSimpleQa", "label": "Chinese SimpleQA", "max": 100},
+//     {"key": "benchmarkAvg", "label": "综合基准分", "max": 100},
+//     {"key": "instruction", "label": "指令遵循", "max": 100},
+//     {"key": "worldKnowledge", "label": "世界知识", "max": 100},
+//     {"key": "reasoning", "label": "复杂推理", "max": 100},
+// ]
 export const BENCHMARK_METRICS = [
   { key: "mmluPro", label: "MMLU-Pro", max: 100 },
   { key: "math", label: "Math", max: 100 },
@@ -25,6 +49,14 @@ export const BENCHMARK_METRICS = [
   { key: "reasoning", label: "复杂推理", max: 100 },
 ];
 
+// Python equivalent:
+// VIEW_OPTIONS = [
+//     {"key": "overall", "label": "综合视图"},
+//     {"key": "qualityAvg", "label": "教学平均分"},
+//     {"key": "benchmarkAvg", "label": "综合基准分"},
+//     *[item for item in QUALITY_METRICS if item["key"] != "qualityAvg"],
+//     *[item for item in BENCHMARK_METRICS if item["key"] != "benchmarkAvg"],
+// ]
 export const VIEW_OPTIONS = [
   { key: "overall", label: "综合视图" },
   { key: "qualityAvg", label: "教学平均分" },
@@ -33,6 +65,22 @@ export const VIEW_OPTIONS = [
   ...BENCHMARK_METRICS.filter((item) => item.key !== "benchmarkAvg"),
 ];
 
+// Python equivalent:
+// def score_value(model, key):
+//     if key == "overall":
+//         values = [
+//             value
+//             for value in [model.get("qualityAvg"), model.get("benchmarkAvg")]
+//             if value is not None
+//         ]
+//         if not values:
+//             return None
+//         return (
+//             model.get("qualityAvg", 0) * 20 * 0.35 + model.get("benchmarkAvg", 0) * 0.65
+//             if len(values) == 2
+//             else values[0]
+//         )
+//     return model.get(key)
 export function scoreValue(model, key) {
   if (key === "overall") {
     const values = [model.qualityAvg, model.benchmarkAvg].filter(
@@ -44,12 +92,23 @@ export function scoreValue(model, key) {
   return model[key];
 }
 
+// Python equivalent:
+// def score_max(key):
+//     if key == "overall":
+//         return 100
+//     all_metrics = [*QUALITY_METRICS, *BENCHMARK_METRICS]
+//     return next((item["max"] for item in all_metrics if item["key"] == key), 100)
 export function scoreMax(key) {
   if (key === "overall") return 100;
   const all = [...QUALITY_METRICS, ...BENCHMARK_METRICS];
   return all.find((item) => item.key === key)?.max ?? 100;
 }
 
+// Python equivalent:
+// def label_for(key):
+//     if key == "overall":
+//         return "综合得分"
+//     return next((item["label"] for item in VIEW_OPTIONS if item["key"] == key), key)
 export function labelFor(key) {
   if (key === "overall") return "综合得分";
   return VIEW_OPTIONS.find((item) => item.key === key)?.label ?? key;

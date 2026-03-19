@@ -1201,7 +1201,7 @@ function App() {
               </button>
             </div>
           </nav>
-          <div className="sidebar-foot">hi_react_cc · local workspace</div>
+          <div className="sidebar-foot">eduarean · by inno-spark</div>
         </aside>
 
         <section className="content">
