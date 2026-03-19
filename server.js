@@ -6,7 +6,121 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ratingsFile = path.resolve(__dirname, "data/qualitative/message_ratings.json");
 const ratingsDir = path.resolve(__dirname, "data/qualitative/message_ratings");
-const messagesDir = path.resolve(__dirname, "data/qualitative/messages");
+const legacyMessagesDir = path.resolve(__dirname, "data/qualitative/messages");
+const messagesV2Dir = path.resolve(__dirname, "data/qualitative/messages_v2");
+
+function toPosixPath(value) {
+  return value.split(path.sep).join("/");
+}
+
+function trimText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function extractMessageText(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part?.type === "text") return trimText(part.text);
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n\n");
+  }
+  return "";
+}
+
+function getMessages(source) {
+  return Array.isArray(source?.messages) ? source.messages : [];
+}
+
+function getFirstUserMessage(source) {
+  return (
+    getMessages(source)
+      .find((message) => message?.role === "user")
+      ?.content ?? ""
+  );
+}
+
+function buildMessageOption(source, fileName) {
+  const firstUserMessage = extractMessageText(getFirstUserMessage(source));
+
+  return {
+    fileName,
+    recordId:
+      source?.record_id
+      ?? source?.runId
+      ?? source?.sessionId
+      ?? path.basename(fileName, path.extname(fileName)),
+    label:
+      source?.question
+      ?? source?.title
+      ?? source?.name
+      ?? source?.initialPrompt
+      ?? (firstUserMessage.slice(0, 80) || fileName),
+    scenario:
+      source?.scenario
+      ?? source?.subject
+      ?? source?.metadata?.scenario_name
+      ?? source?.teacher_agent
+      ?? source?.sceneName
+      ?? "",
+    turnCount: source?.turn_count ?? getMessages(source).length ?? 0,
+  };
+}
+
+async function listFilesRecursive(rootDir) {
+  const entries = await readdir(rootDir, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(rootDir, entry.name);
+      if (entry.isDirectory()) {
+        return listFilesRecursive(entryPath);
+      }
+      return [entryPath];
+    }),
+  );
+  return files.flat();
+}
+
+function isInsideDir(rootDir, targetPath) {
+  const relative = path.relative(rootDir, targetPath);
+  return relative && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+function resolveMessageFile(fileName) {
+  const normalized = String(fileName ?? "").replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.startsWith("v1/")) {
+    const filePath = path.resolve(legacyMessagesDir, normalized.slice(3));
+    return isInsideDir(legacyMessagesDir, filePath) ? filePath : null;
+  }
+
+  if (normalized.startsWith("v2/")) {
+    const filePath = path.resolve(messagesV2Dir, normalized.slice(3));
+    return isInsideDir(messagesV2Dir, filePath) ? filePath : null;
+  }
+
+  const legacyPath = path.resolve(legacyMessagesDir, path.basename(normalized));
+  if (isInsideDir(legacyMessagesDir, legacyPath)) {
+    return legacyPath;
+  }
+
+  return null;
+}
+
+async function readMessageRecord(fileName) {
+  const filePath = resolveMessageFile(fileName);
+  if (!filePath) return null;
+
+  const content = await readFile(filePath, "utf8");
+  return JSON.parse(content);
+}
 
 function summarizeRecords(records) {
   const keys = Object.keys(records ?? {});
@@ -69,31 +183,49 @@ async function readRatingsSnapshots() {
 }
 
 async function readMessageOptions() {
+  const items = [];
+
   try {
-    const names = (await readdir(messagesDir))
+    const names = (await readdir(legacyMessagesDir))
       .filter((name) => name.endsWith(".json"))
       .sort();
 
-    const items = await Promise.all(
+    const legacyItems = await Promise.all(
       names.map(async (name) => {
-        const filePath = path.join(messagesDir, name);
+        const filePath = path.join(legacyMessagesDir, name);
         const content = await readFile(filePath, "utf8");
         const data = JSON.parse(content);
-        const fallbackQuestion = data.messages?.find((message) => message?.role === "user")?.content ?? "";
-        return {
-          fileName: name,
-          recordId: data.record_id ?? name.replace(/\.json$/i, ""),
-          label: data.question ?? data.name ?? (fallbackQuestion.slice(0, 80) || name),
-          scenario: data.scenario ?? data.subject ?? data.metadata?.scenario_name ?? data.teacher_agent ?? "",
-          turnCount: data.turn_count ?? data.messages?.length ?? 0,
-        };
+        return buildMessageOption(data, `v1/${name}`);
       }),
     );
-
-    return items;
+    items.push(...legacyItems);
   } catch {
-    return [];
+    // Ignore missing legacy directory.
   }
+
+  try {
+    const filePaths = (await listFilesRecursive(messagesV2Dir))
+      .filter((filePath) => filePath.endsWith("conversation-messages.json"))
+      .sort((left, right) => left.localeCompare(right, "zh-Hans-CN"));
+
+    const v2Items = await Promise.all(
+      filePaths.map(async (filePath) => {
+        const content = await readFile(filePath, "utf8");
+        const data = JSON.parse(content);
+        const relativePath = toPosixPath(path.relative(messagesV2Dir, filePath));
+        return buildMessageOption(data, `v2/${relativePath}`);
+      }),
+    );
+    items.push(...v2Items);
+  } catch {
+    // Ignore missing v2 directory.
+  }
+
+  return items.sort((left, right) => {
+    const scenarioCompare = String(left.scenario ?? "").localeCompare(String(right.scenario ?? ""), "zh-Hans-CN");
+    if (scenarioCompare !== 0) return scenarioCompare;
+    return String(left.label ?? "").localeCompare(String(right.label ?? ""), "zh-Hans-CN");
+  });
 }
 
 async function readAggregatedRatings() {
@@ -260,11 +392,25 @@ async function handleRatingsFolderApi(req, res) {
 
 async function handleMessageOptionsApi(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  const requestUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? "127.0.0.1"}`);
+  const fileName = requestUrl.searchParams.get("file");
 
   if (req.method === "GET") {
+    if (fileName) {
+      const record = await readMessageRecord(fileName);
+      if (!record) {
+        res.statusCode = 404;
+        res.end(JSON.stringify({ error: "Message record not found" }));
+        return true;
+      }
+      console.log("[messages:record:get]", { fileName });
+      res.end(JSON.stringify(record));
+      return true;
+    }
+
     const items = await readMessageOptions();
     console.log("[messages:list:get]", {
-      dir: messagesDir,
+      dirs: [legacyMessagesDir, messagesV2Dir],
       count: items.length,
       files: items.map((item) => item.fileName),
     });

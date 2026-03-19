@@ -1,4 +1,5 @@
 export function parseNumber(value) {
+  debugger;
   if (!value) return null;
   const cleaned = value.replace(/\?/g, "").trim();
   if (!cleaned) return null;
@@ -70,10 +71,18 @@ export function normalizeQualitativeRecord(source, fileName = "") {
 
   return {
     ...source,
-    record_id: source?.record_id ?? (fileBaseName(fileName) || "qualitative-record"),
-    scenario: source?.scenario ?? source?.subject ?? source?.metadata?.scenario_name ?? source?.teacher_agent ?? "未提供",
+    record_id: source?.record_id ?? source?.runId ?? source?.sessionId ?? (fileBaseName(fileName) || "qualitative-record"),
+    scenario:
+      source?.scenario
+      ?? source?.subject
+      ?? source?.metadata?.scenario_name
+      ?? source?.teacher_agent
+      ?? source?.sceneName
+      ?? "未提供",
     question:
       source?.question
+      ?? source?.title
+      ?? source?.initialPrompt
       ?? source?.student_agent?.profile_summary?.original_question
       ?? firstUserMessage
       ?? source?.name

@@ -1025,7 +1025,7 @@ function App() {
     if (!selectedMessageFile) return;
 
     async function loadSelectedRecord() {
-      const response = await fetch(`/data/qualitative/messages/${selectedMessageFile}`);
+      const response = await fetch(`/api/qualitative-messages?file=${encodeURIComponent(selectedMessageFile)}`);
       if (!response.ok) {
         throw new Error(`record failed:${response.status}`);
       }
