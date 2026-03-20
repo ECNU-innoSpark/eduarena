@@ -464,7 +464,7 @@ function MetricItem({ label, value, max }) {
   );
 }
 
-export function Leaderboard({
+function LeaderboardView({
   activeView,
   domesticCount,
   foreignCount,
@@ -640,7 +640,7 @@ export function Leaderboard({
   );
 }
 
-export function LeaderboardWorkspace({
+export function Leaderboard({
   activeView,
   query,
   setActiveView,
@@ -657,7 +657,16 @@ export function LeaderboardWorkspace({
   } = useLeaderboardData({ activeView, query });
 
   return (
-    <Leaderboard
+    <>
+      <div className="content-topbar">
+        <div className="topbar-title">
+          Leaderboard Workspace
+          <strong>教学能力与通用基准榜单</strong>
+        </div>
+        <div className="topbar-meta">{`${models.length || 0} models loaded`}</div>
+      </div>
+
+      <LeaderboardView
       activeView={activeView}
       domesticCount={domesticCount}
       foreignCount={foreignCount}
@@ -669,6 +678,7 @@ export function LeaderboardWorkspace({
       setActiveView={setActiveView}
       setQuery={setQuery}
       setSelectedModel={setSelectedModel}
-    />
+      />
+    </>
   );
 }

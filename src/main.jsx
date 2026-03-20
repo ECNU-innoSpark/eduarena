@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ANNOTATION_CSS, Annotation, WorkspaceTopbar } from "./Annotation";
+import { ANNOTATION_CSS, Annotation } from "./Annotation";
 import {
   LEADERBOARD_CSS,
-  LeaderboardWorkspace,
+  Leaderboard,
   labelFor,
 } from "./Leaderboard";
 
@@ -239,11 +239,9 @@ function App() {
         </aside>
 
         <section className="content">
-          <WorkspaceTopbar activeSection={activeSection} />
-
           <div className="workspace">
         {activeSection === "leaderboard" ? (
-          <LeaderboardWorkspace
+          <Leaderboard
             activeView={activeView}
             query={query}
             setActiveView={setActiveView}
