@@ -48,6 +48,14 @@ export const PAIRWISE_CSS = `
     background: rgba(255, 255, 255, 0.03);
   }
 
+  .pairwise-scorecard {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .pairwise-candidate-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -248,10 +256,11 @@ export const PAIRWISE_CSS = `
   }
 
   .dimension-card {
-    padding: 12px;
-    border-radius: 16px;
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 0 12px;
+    border-radius: 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
   }
 
   .dimension-card strong {
@@ -299,10 +308,10 @@ const WINNER_OPTIONS = [
 ];
 
 const DIMENSIONS = [
-  { key: "pedagogy", label: "教学引导" },
-  { key: "accuracy", label: "准确性" },
-  { key: "clarity", label: "表达清晰度" },
-  { key: "completeness", label: "完整性" },
+  { key: "pedagogy", label: "专业性" },
+  { key: "accuracy", label: "个性化" },
+  { key: "clarity", label: "创造力" },
+  { key: "completeness", label: "价值观" },
 ];
 
 const CHOICE_OPTIONS = [
