@@ -9,6 +9,7 @@ const ratingsDir = path.resolve(__dirname, "data/qualitative/message_ratings");
 const pairwiseRatingsDir = path.resolve(__dirname, "data/qualitative/message_pariwise_ratings");
 const legacyMessagesDir = path.resolve(__dirname, "data/qualitative/messages");
 const messagesV2Dir = path.resolve(__dirname, "data/qualitative/messages_v2");
+const messagesV3Dir = path.resolve(__dirname, "data/qualitative/messages_v3");
 
 function toPosixPath(value) {
   return value.split(path.sep).join("/");
@@ -76,6 +77,9 @@ async function listFilesRecursive(rootDir) {
   const entries = await readdir(rootDir, { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async (entry) => {
+      if (entry.isDirectory() && entry.name === ".git") {
+        return [];
+      }
       const entryPath = path.join(rootDir, entry.name);
       if (entry.isDirectory()) {
         return listFilesRecursive(entryPath);
@@ -105,6 +109,11 @@ function resolveMessageFile(fileName) {
   if (normalized.startsWith("v2/")) {
     const filePath = path.resolve(messagesV2Dir, normalized.slice(3));
     return isInsideDir(messagesV2Dir, filePath) ? filePath : null;
+  }
+
+  if (normalized.startsWith("v3/")) {
+    const filePath = path.resolve(messagesV3Dir, normalized.slice(3));
+    return isInsideDir(messagesV3Dir, filePath) ? filePath : null;
   }
 
   const legacyPath = path.resolve(legacyMessagesDir, path.basename(normalized));
@@ -236,40 +245,58 @@ async function readRatingsSnapshots(targetDir = ratingsDir) {
 async function readMessageOptions() {
   const items = [];
 
-  try {
-    const names = (await readdir(legacyMessagesDir))
-      .filter((name) => name.endsWith(".json"))
-      .sort();
+  // try {
+  //   const names = (await readdir(legacyMessagesDir))
+  //     .filter((name) => name.endsWith(".json"))
+  //     .sort();
+  //
+  //   const legacyItems = await Promise.all(
+  //     names.map(async (name) => {
+  //       const filePath = path.join(legacyMessagesDir, name);
+  //       const content = await readFile(filePath, "utf8");
+  //       const data = JSON.parse(content);
+  //       return buildMessageOption(data, `v1/${name}`);
+  //     }),
+  //   );
+  //   items.push(...legacyItems);
+  // } catch {
+  //   // Ignore missing legacy directory.
+  // }
+  //
+  // try {
+  //   const filePaths = (await listFilesRecursive(messagesV2Dir))
+  //     .filter((filePath) => filePath.endsWith("conversation-messages.json"))
+  //     .sort((left, right) => left.localeCompare(right, "zh-Hans-CN"));
+  //
+  //   const v2Items = await Promise.all(
+  //     filePaths.map(async (filePath) => {
+  //       const content = await readFile(filePath, "utf8");
+  //       const data = JSON.parse(content);
+  //       const relativePath = toPosixPath(path.relative(messagesV2Dir, filePath));
+  //       return buildMessageOption(data, `v2/${relativePath}`);
+  //     }),
+  //   );
+  //   items.push(...v2Items);
+  // } catch {
+  //   // Ignore missing v2 directory.
+  // }
 
-    const legacyItems = await Promise.all(
-      names.map(async (name) => {
-        const filePath = path.join(legacyMessagesDir, name);
-        const content = await readFile(filePath, "utf8");
-        const data = JSON.parse(content);
-        return buildMessageOption(data, `v1/${name}`);
-      }),
-    );
-    items.push(...legacyItems);
-  } catch {
-    // Ignore missing legacy directory.
-  }
-
   try {
-    const filePaths = (await listFilesRecursive(messagesV2Dir))
+    const filePaths = (await listFilesRecursive(messagesV3Dir))
       .filter((filePath) => filePath.endsWith("conversation-messages.json"))
       .sort((left, right) => left.localeCompare(right, "zh-Hans-CN"));
 
-    const v2Items = await Promise.all(
+    const v3Items = await Promise.all(
       filePaths.map(async (filePath) => {
         const content = await readFile(filePath, "utf8");
         const data = JSON.parse(content);
-        const relativePath = toPosixPath(path.relative(messagesV2Dir, filePath));
-        return buildMessageOption(data, `v2/${relativePath}`);
+        const relativePath = toPosixPath(path.relative(messagesV3Dir, filePath));
+        return buildMessageOption(data, `${relativePath}`);
       }),
     );
-    items.push(...v2Items);
+    items.push(...v3Items);
   } catch {
-    // Ignore missing v2 directory.
+    // Ignore missing v3 directory.
   }
 
   return items.sort((left, right) => {
@@ -470,7 +497,7 @@ async function handleMessageOptionsApi(req, res) {
 
     const items = await readMessageOptions();
     console.log("[messages:list:get]", {
-      dirs: [legacyMessagesDir, messagesV2Dir],
+      dirs: [legacyMessagesDir, messagesV2Dir, messagesV3Dir],
       count: items.length,
       files: items.map((item) => item.fileName),
     });
