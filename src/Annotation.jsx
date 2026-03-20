@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { TypeaheadDropdown } from "./Components";
 import {
   clampRating,
   createEmptyRatings,
@@ -1003,19 +1004,13 @@ export function Annotation({ locale = "zh" }) {
                   <span>{record.record_id}</span>
                 </div>
                 {messageOptions.length ? (
-                  <label className="field" style={{ marginBottom: 16 }}>
-                    <span>{copy.selectMessage}</span>
-                    <select
-                      value={selectedMessageFile}
-                      onChange={(event) => setSelectedMessageFile(event.target.value)}
-                    >
-                      {messageOptions.map((item) => (
-                        <option key={item.fileName} value={item.fileName}>
-                          {item.fileName} · {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <TypeaheadDropdown
+                    label={copy.selectMessage}
+                    onChange={setSelectedMessageFile}
+                    options={messageOptions}
+                    style={{ marginBottom: 16 }}
+                    value={selectedMessageFile}
+                  />
                 ) : null}
                 <div className="record-meta">
                   <div className="meta-row">
