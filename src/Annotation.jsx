@@ -227,6 +227,26 @@ export const ANNOTATION_CSS = `
     gap: 14px;
   }
 
+  .conversation-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .conversation-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .conversation-filter input {
+    accent-color: var(--accent);
+  }
+
   .message-card {
     padding: 14px;
     border-radius: 18px;
@@ -264,6 +284,13 @@ export const ANNOTATION_CSS = `
     gap: 8px;
     font-size: 13px;
     font-weight: 600;
+  }
+
+  .message-tool-call-id {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+    font-family: "SFMono-Regular", "SF Mono", "Consolas", monospace;
   }
 
   .message-index {
@@ -379,6 +406,54 @@ export const ANNOTATION_CSS = `
     padding-left: 14px;
     border-left: 3px solid rgba(255, 255, 255, 0.18);
     color: var(--muted);
+  }
+
+  .tool-calls {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tool-call {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .tool-call-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .tool-call-name {
+    font-weight: 600;
+  }
+
+  .tool-call-id {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: "SFMono-Regular", "SF Mono", "Consolas", monospace;
+  }
+
+  .tool-call-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .tool-call pre {
+    margin: 0;
+    overflow-x: auto;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.18);
+    font-family: "SFMono-Regular", "SF Mono", "Consolas", monospace;
+    font-size: 12px;
+    line-height: 1.55;
   }
 
   .rating-grid {
@@ -549,6 +624,7 @@ const ANNOTATION_COPY = {
     messages: "消息",
     collapse: "收起",
     expand: "展开",
+    showTool: "显示 tool",
     loading: "质性记录加载中。",
   },
   en: {
@@ -578,6 +654,7 @@ const ANNOTATION_COPY = {
     messages: "Messages",
     collapse: "Collapse",
     expand: "Expand",
+    showTool: "Show tool",
     loading: "Loading qualitative record.",
   },
 };
@@ -592,6 +669,7 @@ export function Annotation({ locale = "zh" }) {
   const [ratings, setRatings] = useState(createEmptyRatings(null));
   const [saveState, setSaveState] = useState("");
   const [collapsedMessages, setCollapsedMessages] = useState({});
+  const [showToolMessages, setShowToolMessages] = useState(true);
 
   useEffect(() => {
     async function loadRatings() {
@@ -707,6 +785,11 @@ export function Annotation({ locale = "zh" }) {
     };
   }, [ratingFolderSummary]);
 
+  const visibleMessages = useMemo(() => {
+    const messages = record?.messages ?? [];
+    return showToolMessages ? messages : messages.filter((message) => message.role !== "tool");
+  }, [record?.messages, showToolMessages]);
+
   function updateOverview(field, value) {
     setRatings((current) => ({
       ...current,
@@ -778,6 +861,54 @@ export function Annotation({ locale = "zh" }) {
       ...current,
       [index]: !current[index],
     }));
+  }
+
+  function formatToolArguments(rawArguments) {
+    if (!rawArguments) return "";
+
+    try {
+      return JSON.stringify(JSON.parse(rawArguments), null, 2);
+    } catch {
+      return rawArguments;
+    }
+  }
+
+  function renderMessageContent(message) {
+    if (typeof message.content === "string" && message.content.trim()) {
+      return (
+        <Markdown remarkPlugins={[remarkGfm]}>
+          {message.content}
+        </Markdown>
+      );
+    }
+
+    if (Array.isArray(message.tool_calls) && message.tool_calls.length) {
+      return (
+        <div className="tool-calls">
+          {message.tool_calls.map((toolCall, toolIndex) => {
+            const functionName = toolCall?.function?.name || toolCall?.type || "tool_call";
+            const formattedArguments = formatToolArguments(toolCall?.function?.arguments);
+
+            return (
+              <div key={toolCall?.id || `${functionName}-${toolIndex}`} className="tool-call">
+                <div className="tool-call-head">
+                  <span className="tool-call-name">{functionName}</span>
+                  {toolCall?.id ? <span className="tool-call-id">{toolCall.id}</span> : null}
+                </div>
+                {formattedArguments ? (
+                  <>
+                    <span className="tool-call-label">arguments</span>
+                    <pre>{formattedArguments}</pre>
+                  </>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -912,10 +1043,20 @@ export function Annotation({ locale = "zh" }) {
             <article className="conversation-panel">
               <div className="section-title">
                 <h3>{copy.messages}</h3>
-                <span>{selectedMessageFile || record.record_id} · {record.messages.length} {copy.messagesUnit}</span>
+                <span>{selectedMessageFile || record.record_id} · {visibleMessages.length} {copy.messagesUnit}</span>
+              </div>
+              <div className="conversation-toolbar">
+                <label className="conversation-filter">
+                  <input
+                    checked={showToolMessages}
+                    onChange={(event) => setShowToolMessages(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>{copy.showTool}</span>
+                </label>
               </div>
               <div className="conversation-list">
-                {record.messages.map((message, index) => {
+                {visibleMessages.map((message, index) => {
                   const isCollapsed = Boolean(collapsedMessages[index]);
 
                   return (
@@ -924,7 +1065,12 @@ export function Annotation({ locale = "zh" }) {
                       className={`message-card ${message.role || "unknown"}`}
                     >
                       <div className="message-head">
-                        <div className="message-role">{message.role || "unknown"}</div>
+                        <div className="message-role">
+                          <span>{message.role || "unknown"}</span>
+                          {message.role === "tool" && message.tool_call_id ? (
+                            <span className="message-tool-call-id">{message.tool_call_id}</span>
+                          ) : null}
+                        </div>
                         <div className="message-head-actions">
                           <button
                             className="message-toggle"
@@ -938,9 +1084,7 @@ export function Annotation({ locale = "zh" }) {
                       </div>
                       {!isCollapsed ? (
                         <div className="message-body">
-                          <Markdown remarkPlugins={[remarkGfm]}>
-                            {message.content || ""}
-                          </Markdown>
+                          {renderMessageContent(message)}
                         </div>
                       ) : null}
                     </div>
