@@ -137,7 +137,7 @@ export const ANNOTATION_CSS = `
 
   .qualitative-layout {
     display: grid;
-    grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.35fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.8fr);
     gap: 18px;
   }
 
@@ -147,6 +147,7 @@ export const ANNOTATION_CSS = `
     align-self: start;
     position: sticky;
     top: 18px;
+    order: 2;
   }
 
   .record-card,
@@ -195,6 +196,7 @@ export const ANNOTATION_CSS = `
   .conversation-panel {
     padding: 16px;
     min-width: 0;
+    order: 1;
   }
 
   .record-meta {
@@ -250,6 +252,12 @@ export const ANNOTATION_CSS = `
     margin-bottom: 10px;
   }
 
+  .message-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .message-role {
     display: inline-flex;
     align-items: center;
@@ -261,6 +269,22 @@ export const ANNOTATION_CSS = `
   .message-index {
     color: var(--muted);
     font-size: 12px;
+  }
+
+  .message-toggle {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .message-toggle:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .message-body {
@@ -523,6 +547,8 @@ const ANNOTATION_COPY = {
     turnCount: "轮次数",
     notProvided: "未提供",
     messages: "消息",
+    collapse: "收起",
+    expand: "展开",
     loading: "质性记录加载中。",
   },
   en: {
@@ -550,6 +576,8 @@ const ANNOTATION_COPY = {
     turnCount: "Turn count",
     notProvided: "Not provided",
     messages: "Messages",
+    collapse: "Collapse",
+    expand: "Expand",
     loading: "Loading qualitative record.",
   },
 };
@@ -563,6 +591,7 @@ export function Annotation({ locale = "zh" }) {
   const [ratingFolderSummary, setRatingFolderSummary] = useState(null);
   const [ratings, setRatings] = useState(createEmptyRatings(null));
   const [saveState, setSaveState] = useState("");
+  const [collapsedMessages, setCollapsedMessages] = useState({});
 
   useEffect(() => {
     async function loadRatings() {
@@ -653,6 +682,10 @@ export function Annotation({ locale = "zh" }) {
   }, [record, savedScoreFile]);
 
   useEffect(() => {
+    setCollapsedMessages({});
+  }, [record?.record_id, selectedMessageFile]);
+
+  useEffect(() => {
     async function loadRatingFolderSummary() {
       const response = await fetch("/api/qualitative-ratings-folder");
       if (!response.ok) {
@@ -738,6 +771,13 @@ export function Annotation({ locale = "zh" }) {
       }
       setSaveState("服务器保存失败，评分已暂存到当前浏览器本地。");
     }
+  }
+
+  function toggleMessage(index) {
+    setCollapsedMessages((current) => ({
+      ...current,
+      [index]: !current[index],
+    }));
   }
 
   return (
@@ -875,22 +915,37 @@ export function Annotation({ locale = "zh" }) {
                 <span>{selectedMessageFile || record.record_id} · {record.messages.length} {copy.messagesUnit}</span>
               </div>
               <div className="conversation-list">
-                {record.messages.map((message, index) => (
-                  <div
-                    key={`${message.role}-${index}`}
-                    className={`message-card ${message.role || "unknown"}`}
-                  >
-                    <div className="message-head">
-                      <div className="message-role">{message.role || "unknown"}</div>
-                      <div className="message-index">#{index + 1}</div>
+                {record.messages.map((message, index) => {
+                  const isCollapsed = Boolean(collapsedMessages[index]);
+
+                  return (
+                    <div
+                      key={`${message.role}-${index}`}
+                      className={`message-card ${message.role || "unknown"}`}
+                    >
+                      <div className="message-head">
+                        <div className="message-role">{message.role || "unknown"}</div>
+                        <div className="message-head-actions">
+                          <button
+                            className="message-toggle"
+                            onClick={() => toggleMessage(index)}
+                            type="button"
+                          >
+                            {isCollapsed ? copy.expand : copy.collapse}
+                          </button>
+                          <div className="message-index">#{index + 1}</div>
+                        </div>
+                      </div>
+                      {!isCollapsed ? (
+                        <div className="message-body">
+                          <Markdown remarkPlugins={[remarkGfm]}>
+                            {message.content || ""}
+                          </Markdown>
+                        </div>
+                      ) : null}
                     </div>
-                    <div className="message-body">
-                      <Markdown remarkPlugins={[remarkGfm]}>
-                        {message.content || ""}
-                      </Markdown>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </article>
           </div>
