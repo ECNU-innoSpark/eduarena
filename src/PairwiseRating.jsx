@@ -598,7 +598,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadRatingFolderSummary() {
-      const response = await fetch("/api/qualitative-ratings-folder");
+      const response = await fetch("/api/qualitative-ratings-folder?kind=pairwise");
       if (!response.ok) {
         throw new Error(`folder summary failed:${response.status}`);
       }
@@ -741,7 +741,7 @@ export function PairwiseRating({ locale = "zh" }) {
       writeLocalRatings(savedFile);
       setSavedRatingsFile(savedFile);
       try {
-        const folderResponse = await fetch("/api/qualitative-ratings-folder");
+        const folderResponse = await fetch("/api/qualitative-ratings-folder?kind=pairwise");
         if (folderResponse.ok) {
           const folderSummary = await folderResponse.json();
           setRatingFolderSummary(folderSummary);

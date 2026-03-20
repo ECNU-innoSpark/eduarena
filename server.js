@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ratingsFile = path.resolve(__dirname, "data/qualitative/message_ratings.json");
 const ratingsDir = path.resolve(__dirname, "data/qualitative/message_ratings");
+const pairwiseRatingsDir = path.resolve(__dirname, "data/qualitative/message_pariwise_ratings");
 const legacyMessagesDir = path.resolve(__dirname, "data/qualitative/messages");
 const messagesV2Dir = path.resolve(__dirname, "data/qualitative/messages_v2");
 
@@ -151,6 +152,56 @@ async function ensureRatingsDir() {
   await mkdir(ratingsDir, { recursive: true });
 }
 
+async function ensurePairwiseRatingsDir() {
+  await mkdir(pairwiseRatingsDir, { recursive: true });
+}
+
+const PAIRWISE_WINNERS = new Set(["a", "b", "tie", "both_bad"]);
+const PAIRWISE_CONFIDENCE = new Set(["high", "medium", "low", ""]);
+const PAIRWISE_DIMENSION_CHOICES = new Set(["a", "b", "tie", ""]);
+const PAIRWISE_DIMENSIONS = ["pedagogy", "accuracy", "clarity", "completeness"];
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isIsoDateString(value) {
+  return isNonEmptyString(value) && Number.isFinite(Date.parse(value));
+}
+
+function isValidPairwiseRecord(record) {
+  console.log(record)
+  if (!record || typeof record !== "object") return false;
+  if (!isNonEmptyString(record.record_id)) return false;
+  if (!isNonEmptyString(record.scenario)) return false;
+  if (!isNonEmptyString(record.question)) return false;
+  if (!Number.isFinite(Number(record.turn_count))) return false;
+  if (!isIsoDateString(record.updatedAt)) return false;
+
+  const pairwise = record.pairwise;
+  if (!pairwise || typeof pairwise !== "object") return false;
+  if (!PAIRWISE_WINNERS.has(pairwise.winner)) return false;
+  if (!PAIRWISE_CONFIDENCE.has(pairwise.confidence ?? "")) return false;
+  if (pairwise.note != null && typeof pairwise.note !== "string") return false;
+
+  for (const dimension of PAIRWISE_DIMENSIONS) {
+    if (!PAIRWISE_DIMENSION_CHOICES.has(pairwise[dimension] ?? "")) {
+      return false;
+    }
+  }
+
+  const pairwiseMeta = record.pairwise_meta;
+  if (!pairwiseMeta || typeof pairwiseMeta !== "object") return false;
+  if (!isNonEmptyString(pairwiseMeta.candidate_a_file)) return false;
+  if (!isNonEmptyString(pairwiseMeta.candidate_b_file)) return false;
+
+  return true;
+}
+
+function hasPairwiseRatings(records) {
+  return Object.values(records ?? {}).some((record) => isValidPairwiseRecord(record));
+}
+
 function pickNewerRecord(currentRecord, nextRecord) {
   if (!currentRecord) return nextRecord;
 
@@ -160,14 +211,14 @@ function pickNewerRecord(currentRecord, nextRecord) {
   return nextTime >= currentTime ? nextRecord : currentRecord;
 }
 
-async function readRatingsSnapshots() {
+async function readRatingsSnapshots(targetDir = ratingsDir) {
   try {
-    await ensureRatingsDir();
-    const names = await readdir(ratingsDir);
+    await mkdir(targetDir, { recursive: true });
+    const names = await readdir(targetDir);
     const jsonNames = names.filter((name) => name.endsWith(".json")).sort();
     const snapshots = await Promise.all(
       jsonNames.map(async (name) => {
-        const filePath = path.join(ratingsDir, name);
+        const filePath = path.join(targetDir, name);
         const content = await readFile(filePath, "utf8");
         return {
           name,
@@ -269,7 +320,7 @@ function extractLatestRecords(records) {
   );
 }
 
-function buildFolderSummary(snapshots) {
+function buildFolderSummary(snapshots, targetDir = ratingsDir) {
   const scoreValues = [];
 
   for (const snapshot of snapshots) {
@@ -282,7 +333,7 @@ function buildFolderSummary(snapshots) {
   }
 
   return {
-    dir: ratingsDir,
+    dir: targetDir,
     fileCount: snapshots.length,
     files: snapshots.map((snapshot) => ({
       name: snapshot.name,
@@ -344,9 +395,10 @@ async function handleRatingsApi(req, res) {
         records: extractLatestRecords(payload.records),
       };
       const nextSummary = summarizeRecords(nextFile.records);
-      const snapshotPath = path.join(ratingsDir, createSnapshotFileName(nextFile.savedAt));
+      const targetDir = hasPairwiseRatings(snapshotData.records) ? pairwiseRatingsDir : ratingsDir;
+      const snapshotPath = path.join(targetDir, createSnapshotFileName(nextFile.savedAt));
       console.log("[ratings:post]", {
-        dir: ratingsDir,
+        dir: targetDir,
         file: ratingsFile,
         snapshotPath,
         currentCount: currentSummary.count,
@@ -357,8 +409,13 @@ async function handleRatingsApi(req, res) {
         payloadKeys: payloadSummary.keys,
         overlappingKeys,
         nextKeys: nextSummary.keys,
+        containsPairwise: hasPairwiseRatings(snapshotData.records),
       });
-      await ensureRatingsDir();
+      if (targetDir === pairwiseRatingsDir) {
+        await ensurePairwiseRatingsDir();
+      } else {
+        await ensureRatingsDir();
+      }
       await writeFile(snapshotPath, JSON.stringify(snapshotData, null, 2));
       res.end(JSON.stringify(nextFile));
     } catch (error) {
@@ -376,11 +433,14 @@ async function handleRatingsApi(req, res) {
 
 async function handleRatingsFolderApi(req, res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  const requestUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? "127.0.0.1"}`);
+  const kind = requestUrl.searchParams.get("kind");
 
   if (req.method === "GET") {
-    const snapshots = await readRatingsSnapshots();
-    const summary = buildFolderSummary(snapshots);
-    console.log("[ratings:folder:get]", summary);
+    const targetDir = kind === "pairwise" ? pairwiseRatingsDir : ratingsDir;
+    const snapshots = await readRatingsSnapshots(targetDir);
+    const summary = buildFolderSummary(snapshots, targetDir);
+    console.log("[ratings:folder:get]", { kind: kind ?? "default", ...summary });
     res.end(JSON.stringify(summary));
     return true;
   }
