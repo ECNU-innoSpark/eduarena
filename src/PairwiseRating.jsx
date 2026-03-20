@@ -41,8 +41,7 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-candidates,
-  .pairwise-scorecard,
-  .pairwise-summary {
+  .pairwise-scorecard {
     padding: 16px;
     border-radius: 20px;
     border: 1px solid var(--line);
@@ -738,10 +737,8 @@ export function PairwiseRating({ locale = "zh" }) {
 
     const records = Object.values(mergedRecords);
     const pairwiseRecords = records.filter((item) => item?.pairwise?.winner);
-    const currentWinner = ratings.pairwise.winner || "--";
     return {
       count: ratingFolderSummary?.fileCount ?? pairwiseRecords.length,
-      currentWinner,
     };
   }, [activeRecord?.record_id, ratingFolderSummary?.fileCount, ratings.pairwise, savedRatingsFile]);
 
@@ -838,6 +835,7 @@ export function PairwiseRating({ locale = "zh" }) {
             <p>{copy.hero}</p>
           </div>
           <div className="qualitative-meta">
+            <span className="pill">{copy.summaryCount}: {pairwiseSummary.count}</span>
             <span className="pill">{copy.pill}</span>
             {pairwiseCandidates.candidates.length ? (
               <span className="pill">
@@ -850,23 +848,6 @@ export function PairwiseRating({ locale = "zh" }) {
         {activeRecord ? (
           <div className="pairwise-layout">
             <div className="pairwise-bottom">
-              <article className="pairwise-summary">
-                <div className="section-title">
-                  <h3>{copy.stats}</h3>
-                  <span>{copy.recordInfo}</span>
-                </div>
-                <div className="stats-grid">
-                  <div className="stats-item">
-                    <span>{copy.summaryCount}</span>
-                    <strong>{pairwiseSummary.count}</strong>
-                  </div>
-                  <div className="stats-item">
-                    <span>{copy.summaryWinner}</span>
-                    <strong>{pairwiseSummary.currentWinner.toUpperCase?.() ?? pairwiseSummary.currentWinner}</strong>
-                  </div>
-                </div>
-              </article>
-
               <article className="pairwise-scorecard">
                 <div className="section-title">
                   <h3>{copy.scoring}</h3>
