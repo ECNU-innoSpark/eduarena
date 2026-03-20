@@ -125,6 +125,11 @@ function resolveMessageFile(fileName) {
     return isInsideDir(messagesV3Dir, filePath) ? filePath : null;
   }
 
+  const v3Path = path.resolve(messagesV3Dir, normalized);
+  if (isInsideDir(messagesV3Dir, v3Path)) {
+    return v3Path;
+  }
+
   const legacyPath = path.resolve(legacyMessagesDir, path.basename(normalized));
   if (isInsideDir(legacyMessagesDir, legacyPath)) {
     return legacyPath;
@@ -301,7 +306,7 @@ async function readMessageOptions() {
         const data = JSON.parse(content);
         const conversationPath = path.join(path.dirname(filePath), "conversation-messages.json");
         const relativePath = toPosixPath(path.relative(messagesV3Dir, conversationPath));
-        return buildMessageOption(data, `v3/${relativePath}`);
+        return buildMessageOption(data, relativePath);
       }),
     );
     items.push(...v3Items);
