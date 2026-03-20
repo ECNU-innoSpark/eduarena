@@ -54,22 +54,31 @@ function buildMessageOption(source, fileName) {
     recordId:
       source?.record_id
       ?? source?.runId
+      ?? source?.run_id
       ?? source?.sessionId
+      ?? source?.teacherSessionId
       ?? path.basename(fileName, path.extname(fileName)),
     label:
       source?.question
       ?? source?.title
       ?? source?.name
       ?? source?.initialPrompt
+      ?? source?.studentInitialQuestion
       ?? (firstUserMessage.slice(0, 80) || fileName),
     scenario:
       source?.scenario
       ?? source?.subject
       ?? source?.metadata?.scenario_name
+      ?? source?.metadata?.scene
       ?? source?.teacher_agent
+      ?? source?.teacherAgent
       ?? source?.sceneName
       ?? "",
-    turnCount: source?.turn_count ?? getMessages(source).length ?? 0,
+    turnCount:
+      source?.turn_count
+      ?? source?.followUpCount
+      ?? getMessages(source).length
+      ?? 0,
   };
 }
 
@@ -283,15 +292,16 @@ async function readMessageOptions() {
 
   try {
     const filePaths = (await listFilesRecursive(messagesV3Dir))
-      .filter((filePath) => filePath.endsWith("conversation-messages.json"))
+      .filter((filePath) => filePath.endsWith("run.json"))
       .sort((left, right) => left.localeCompare(right, "zh-Hans-CN"));
 
     const v3Items = await Promise.all(
       filePaths.map(async (filePath) => {
         const content = await readFile(filePath, "utf8");
         const data = JSON.parse(content);
-        const relativePath = toPosixPath(path.relative(messagesV3Dir, filePath));
-        return buildMessageOption(data, `${relativePath}`);
+        const conversationPath = path.join(path.dirname(filePath), "conversation-messages.json");
+        const relativePath = toPosixPath(path.relative(messagesV3Dir, conversationPath));
+        return buildMessageOption(data, `v3/${relativePath}`);
       }),
     );
     items.push(...v3Items);

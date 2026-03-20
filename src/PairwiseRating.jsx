@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -108,6 +108,65 @@ export const PAIRWISE_CSS = `
   .candidate-picker {
     margin-bottom: 12px;
     min-width: 0;
+  }
+
+  .typeahead {
+    position: relative;
+  }
+
+  .typeahead-input {
+    width: 100%;
+  }
+
+  .typeahead-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: #101417;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .typeahead-option {
+    width: 100%;
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .typeahead-option:hover,
+  .typeahead-option.active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .typeahead-option-label {
+    font-size: 13px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .typeahead-option-meta {
+    font-size: 12px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .typeahead-empty {
+    padding: 10px 12px;
+    color: var(--muted);
+    font-size: 13px;
   }
 
   .pairwise-candidates .field,
@@ -535,6 +594,105 @@ function renderMessageContent(message) {
   return null;
 }
 
+function buildOptionSearchText(option) {
+  return [
+    option?.fileName,
+    option?.label,
+    option?.scenario,
+    option?.recordId,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function TypeaheadDropdown({
+  label,
+  options,
+  value,
+  onChange,
+}) {
+  const rootRef = useRef(null);
+  const selectedOption = options.find((option) => option.fileName === value) ?? null;
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const normalizedQuery = query.trim().toLowerCase();
+
+  useEffect(() => {
+    setQuery(selectedOption ? `${selectedOption.fileName} · ${selectedOption.label}` : "");
+  }, [selectedOption]);
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!normalizedQuery) return options.slice(0, 50);
+    return options
+      .filter((option) => buildOptionSearchText(option).includes(normalizedQuery))
+      .slice(0, 50);
+  }, [normalizedQuery, options]);
+
+  return (
+    <label className="field candidate-picker">
+      <span>{label}</span>
+      <div className="typeahead" ref={rootRef}>
+        <input
+          className="typeahead-input"
+          onBlur={() => {
+            if (selectedOption) {
+              setQuery(`${selectedOption.fileName} · ${selectedOption.label}`);
+            }
+          }}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={selectedOption ? "" : label}
+          type="text"
+          value={query}
+        />
+        {isOpen ? (
+          <div className="typeahead-menu">
+            {filteredOptions.length ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.fileName}
+                  className={`typeahead-option ${option.fileName === value ? "active" : ""}`}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    onChange(option.fileName);
+                    setQuery(`${option.fileName} · ${option.label}`);
+                    setIsOpen(false);
+                  }}
+                  type="button"
+                >
+                  <span className="typeahead-option-label">{option.label}</span>
+                  <span className="typeahead-option-meta">
+                    {option.scenario || "--"} · {option.fileName}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="typeahead-empty">No matches</div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </label>
+  );
+}
+
 export function PairwiseRating({ locale = "zh" }) {
   const copy = PAIRWISE_COPY[locale] ?? PAIRWISE_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
@@ -917,19 +1075,12 @@ export function PairwiseRating({ locale = "zh" }) {
                       data-slot={isCandidateA ? "a" : "b"}
                     >
                       {messageOptions.length ? (
-                        <label className="field candidate-picker">
-                          <span>{selectLabel}</span>
-                          <select
-                            value={selectedFile}
-                            onChange={(event) => setSelectedFile(event.target.value)}
-                          >
-                            {messageOptions.map((item) => (
-                              <option key={`${isCandidateA ? "a" : "b"}-${item.fileName}`} value={item.fileName}>
-                                {item.fileName} · {item.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                        <TypeaheadDropdown
+                          label={selectLabel}
+                          onChange={setSelectedFile}
+                          options={messageOptions}
+                          value={selectedFile}
+                        />
                       ) : null}
                       <div className="pairwise-candidate-top">
                         <div className="message-role">
