@@ -266,7 +266,7 @@ export const PAIRWISE_CSS = `
 
   .pairwise-bottom {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
     gap: 18px;
     align-items: start;
   }
