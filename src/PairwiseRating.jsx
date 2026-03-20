@@ -230,7 +230,7 @@ export const PAIRWISE_CSS = `
   }
 `;
 
-const LOCAL_PAIRWISE_KEY = "hi-react-cc.pairwise-ratings";
+const LOCAL_RATINGS_KEY = "hi-react-cc.qualitative-ratings";
 
 const WINNER_OPTIONS = [
   { value: "a", label: "A 更好" },
@@ -317,20 +317,20 @@ const PAIRWISE_COPY = {
   },
 };
 
-function readLocalPairwiseRatings() {
+function readLocalRatings() {
   if (typeof window === "undefined") return null;
 
   try {
-    const raw = window.localStorage.getItem(LOCAL_PAIRWISE_KEY);
+    const raw = window.localStorage.getItem(LOCAL_RATINGS_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-function writeLocalPairwiseRatings(data) {
+function writeLocalRatings(data) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(LOCAL_PAIRWISE_KEY, JSON.stringify(data));
+  window.localStorage.setItem(LOCAL_RATINGS_KEY, JSON.stringify(data));
 }
 
 function createEmptyPairwiseRatings() {
@@ -545,24 +545,25 @@ export function PairwiseRating({ locale = "zh" }) {
   const [candidateARecord, setCandidateARecord] = useState(null);
   const [candidateBRecord, setCandidateBRecord] = useState(null);
   const [savedRatingsFile, setSavedRatingsFile] = useState(null);
+  const [ratingFolderSummary, setRatingFolderSummary] = useState(null);
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
 
   useEffect(() => {
     async function loadRatings() {
-      let scoreFile = readLocalPairwiseRatings() ?? { version: 1, records: {} };
+      let scoreFile = readLocalRatings() ?? { version: 1, records: {} };
 
       try {
         const response = await fetch("/api/qualitative-ratings");
         if (response.ok) {
           scoreFile = await response.json();
-          writeLocalPairwiseRatings(scoreFile);
+          writeLocalRatings(scoreFile);
         } else {
           const fallbackResponse = await fetch("/data/qualitative/message_ratings.json");
           if (fallbackResponse.ok) {
             scoreFile = await fallbackResponse.json();
-            writeLocalPairwiseRatings(scoreFile);
+            writeLocalRatings(scoreFile);
           }
         }
       } catch {
@@ -592,6 +593,21 @@ export function PairwiseRating({ locale = "zh" }) {
 
     loadMessageOptions().catch(() => {
       setSaveState("消息列表加载失败。");
+    });
+  }, []);
+
+  useEffect(() => {
+    async function loadRatingFolderSummary() {
+      const response = await fetch("/api/qualitative-ratings-folder");
+      if (!response.ok) {
+        throw new Error(`folder summary failed:${response.status}`);
+      }
+      const summary = await response.json();
+      setRatingFolderSummary(summary);
+    }
+
+    loadRatingFolderSummary().catch(() => {
+      setRatingFolderSummary(null);
     });
   }, []);
 
@@ -664,10 +680,10 @@ export function PairwiseRating({ locale = "zh" }) {
     const pairwiseRecords = records.filter((item) => item?.pairwise?.winner);
     const currentWinner = ratings.pairwise.winner || "--";
     return {
-      count: pairwiseRecords.length,
+      count: ratingFolderSummary?.fileCount ?? pairwiseRecords.length,
       currentWinner,
     };
-  }, [activeRecord?.record_id, ratings.pairwise, savedRatingsFile]);
+  }, [activeRecord?.record_id, ratingFolderSummary?.fileCount, ratings.pairwise, savedRatingsFile]);
 
   function updatePairwise(field, value) {
     setRatings((current) => ({
@@ -722,11 +738,18 @@ export function PairwiseRating({ locale = "zh" }) {
       if (!response.ok) throw new Error(`save failed:${response.status}`);
 
       const savedFile = await response.json();
-      writeLocalPairwiseRatings(savedFile);
+      writeLocalRatings(savedFile);
       setSavedRatingsFile(savedFile);
+      try {
+        const folderResponse = await fetch("/api/qualitative-ratings-folder");
+        if (folderResponse.ok) {
+          const folderSummary = await folderResponse.json();
+          setRatingFolderSummary(folderSummary);
+        }
+      } catch {}
       setSaveState("Pairwise 评分已保存到服务器端 JSON 文件。");
     } catch (error) {
-      writeLocalPairwiseRatings(nextFile);
+      writeLocalRatings(nextFile);
       setSavedRatingsFile(nextFile);
       const message = String(error?.message ?? "");
       if (message.includes("404")) {
