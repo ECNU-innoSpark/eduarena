@@ -226,6 +226,11 @@ export const PAIRWISE_CSS = `
     gap: 8px;
   }
 
+  .segment-options-inline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .segment-option {
     display: inline-flex;
     align-items: center;
@@ -251,6 +256,7 @@ export const PAIRWISE_CSS = `
 
   .dimension-grid {
     display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     margin-top: 14px;
   }
@@ -259,7 +265,6 @@ export const PAIRWISE_CSS = `
     padding: 10px 0 12px;
     border-radius: 0;
     border: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
     background: transparent;
   }
 
@@ -283,11 +288,16 @@ export const PAIRWISE_CSS = `
     .pairwise-bottom {
       grid-template-columns: 1fr;
     }
+
+    .dimension-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 720px) {
     .pairwise-candidate-grid,
-    .pairwise-bottom {
+    .pairwise-bottom,
+    .dimension-grid {
       grid-template-columns: 1fr;
     }
 
@@ -865,7 +875,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
                 <div className="segment-group">
                   <span>{copy.preferred}</span>
-                  <div className="segment-options">
+                  <div className="segment-options segment-options-inline">
                     {WINNER_OPTIONS.map((option) => (
                       <label
                         key={option.value}
