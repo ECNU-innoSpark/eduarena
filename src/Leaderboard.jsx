@@ -314,9 +314,9 @@ export const BENCHMARK_METRICS = [
 //     *[item for item in BENCHMARK_METRICS if item["key"] != "benchmarkAvg"],
 // ]
 export const VIEW_OPTIONS = [
-  { key: "overall", label: "综合视图" },
-  { key: "qualityAvg", label: "教学平均分" },
-  { key: "benchmarkAvg", label: "综合基准分" },
+  { key: "overall", label: { zh: "综合视图", en: "Overview" } },
+  { key: "qualityAvg", label: { zh: "教学平均分", en: "Teaching Avg" } },
+  { key: "benchmarkAvg", label: { zh: "综合基准分", en: "Benchmark Avg" } },
   ...QUALITY_METRICS.filter((item) => item.key !== "qualityAvg"),
   ...BENCHMARK_METRICS.filter((item) => item.key !== "benchmarkAvg"),
 ];
@@ -365,9 +365,10 @@ export function scoreMax(key) {
 //     if key == "overall":
 //         return "综合得分"
 //     return next((item["label"] for item in VIEW_OPTIONS if item["key"] == key), key)
-export function labelFor(key) {
-  if (key === "overall") return "综合得分";
-  return VIEW_OPTIONS.find((item) => item.key === key)?.label ?? key;
+export function labelFor(key, locale = "zh") {
+  if (key === "overall") return locale === "en" ? "Overall Score" : "综合得分";
+  const label = VIEW_OPTIONS.find((item) => item.key === key)?.label;
+  return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? key);
 }
 
 export function useLeaderboardData({ activeView, query }) {
@@ -468,6 +469,7 @@ function LeaderboardView({
   activeView,
   domesticCount,
   foreignCount,
+  locale,
   leader,
   models,
   query,
@@ -477,32 +479,75 @@ function LeaderboardView({
   setQuery,
   setSelectedModel,
 }) {
+  const copy = locale === "en" ? {
+    eyebrow: "llm leaderboard",
+    title: "A dual-axis leaderboard for teaching ability and public benchmarks",
+    hero: "A React visualization generated directly from local CSV files, combining teaching-dimension ratings and public benchmarks into a filterable, switchable, single-model-inspection leaderboard page.",
+    modelCount: "Models",
+    topModel: "Top model",
+    domestic: "Domestic",
+    foreign: "International",
+    search: "Search model / note / version",
+    rankingSuffix: "Ranking",
+    rankingNote: "Sorted automatically by the current view",
+    uncategorized: "Uncategorized",
+    noResults: "No matching results.",
+    untagged: "No note",
+    overall: "Overall",
+    teachingAvg: "Teaching Avg",
+    benchmarkAvg: "Benchmark Avg",
+    teachingMetrics: "Teaching Metrics",
+    benchmarkMetrics: "Benchmark Metrics",
+    fiveScale: "5-point scale",
+    hundredScale: "100-point scale",
+    pickModel: "Select a model on the left to inspect detailed scores.",
+  } : {
+    eyebrow: "llm leaderboard",
+    title: "教学能力与通用基准的双轴榜单",
+    hero: "从本地 CSV 直接生成的 React 可视化，聚合教学维度打分与公开 benchmark，用最少文件提供一个可筛选、可切换维度、可查看单模型细节的榜单页面。",
+    modelCount: "模型数量",
+    topModel: "当前榜首",
+    domestic: "国内模型",
+    foreign: "国外模型",
+    search: "搜索模型名 / 备注 / 版本号",
+    rankingSuffix: "排行",
+    rankingNote: "按当前维度自动排序",
+    uncategorized: "未分类",
+    noResults: "没有匹配结果。",
+    untagged: "未备注",
+    overall: "综合得分",
+    teachingAvg: "教学平均分",
+    benchmarkAvg: "综合基准分",
+    teachingMetrics: "教学维度",
+    benchmarkMetrics: "Benchmark 维度",
+    fiveScale: "5 分制",
+    hundredScale: "百分制",
+    pickModel: "选择左侧模型以查看详细得分。",
+  };
+
   return (
     <>
       <section className="hero">
         <div className="panel hero-copy">
-          <span className="eyebrow">llm leaderboard</span>
-          <h1>教学能力与通用基准的双轴榜单</h1>
-          <p>
-            从本地 CSV 直接生成的 React 可视化，聚合教学维度打分与公开 benchmark，
-            用最少文件提供一个可筛选、可切换维度、可查看单模型细节的榜单页面。
-          </p>
+          <span className="eyebrow">{copy.eyebrow}</span>
+          <h1>{copy.title}</h1>
+          <p>{copy.hero}</p>
         </div>
         <div className="panel stats">
           <div className="stat-card">
-            <span>模型数量</span>
+            <span>{copy.modelCount}</span>
             <strong>{models.length || "--"}</strong>
           </div>
           <div className="stat-card">
-            <span>当前榜首</span>
+            <span>{copy.topModel}</span>
             <strong>{leader ? leader.name.split("-")[0] : "--"}</strong>
           </div>
           <div className="stat-card">
-            <span>国内模型</span>
+            <span>{copy.domestic}</span>
             <strong>{domesticCount}</strong>
           </div>
           <div className="stat-card">
-            <span>国外模型</span>
+            <span>{copy.foreign}</span>
             <strong>{foreignCount}</strong>
           </div>
         </div>
@@ -517,7 +562,7 @@ function LeaderboardView({
               onClick={() => setActiveView(option.key)}
               type="button"
             >
-              {option.label}
+              {typeof option.label === "string" ? option.label : (option.label?.[locale] ?? option.label?.zh)}
             </button>
           ))}
         </div>
@@ -525,7 +570,7 @@ function LeaderboardView({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索模型名 / 备注 / 版本号"
+            placeholder={copy.search}
           />
         </label>
       </section>
@@ -533,8 +578,8 @@ function LeaderboardView({
       <section className="layout">
         <article className="panel chart-panel">
           <div className="section-title">
-            <h2>{labelFor(activeView)} 排行</h2>
-            <span>按当前维度自动排序</span>
+            <h2>{labelFor(activeView, locale)} {copy.rankingSuffix}</h2>
+            <span>{copy.rankingNote}</span>
           </div>
           {ranked.length ? (
             <div className="bars">
@@ -559,7 +604,7 @@ function LeaderboardView({
                       <strong>
                         {index + 1}. {model.name}
                       </strong>
-                      <span>{model.note || "未分类"}</span>
+                      <span>{model.note || copy.uncategorized}</span>
                     </div>
                     <div className="bar-track">
                       <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
@@ -570,7 +615,7 @@ function LeaderboardView({
               })}
             </div>
           ) : (
-            <div className="empty">没有匹配结果。</div>
+            <div className="empty">{copy.noResults}</div>
           )}
         </article>
 
@@ -581,29 +626,29 @@ function LeaderboardView({
                 <div>
                   <h3>{selectedModel.name}</h3>
                   <span className="pill">
-                    {selectedModel.note || "未备注"}
+                    {selectedModel.note || copy.untagged}
                     {selectedModel.version ? ` · v${selectedModel.version}` : ""}
                   </span>
                 </div>
                 <div className="pill">
-                  综合得分 {formatScore(scoreValue(selectedModel, "overall"))}
+                  {copy.overall} {formatScore(scoreValue(selectedModel, "overall"))}
                 </div>
               </div>
 
               <div className="score-grid">
                 <div className="score-card">
-                  <span>教学平均分</span>
+                  <span>{copy.teachingAvg}</span>
                   <strong>{formatScore(selectedModel.qualityAvg)}</strong>
                 </div>
                 <div className="score-card">
-                  <span>综合基准分</span>
+                  <span>{copy.benchmarkAvg}</span>
                   <strong>{formatScore(selectedModel.benchmarkAvg)}</strong>
                 </div>
               </div>
 
               <div className="section-title">
-                <h3>教学维度</h3>
-                <span>5 分制</span>
+                <h3>{copy.teachingMetrics}</h3>
+                <span>{copy.fiveScale}</span>
               </div>
               <div className="metric-list">
                 {QUALITY_METRICS.map((metric) => (
@@ -617,8 +662,8 @@ function LeaderboardView({
               </div>
 
               <div className="section-title" style={{ marginTop: 18 }}>
-                <h3>Benchmark 维度</h3>
-                <span>百分制</span>
+                <h3>{copy.benchmarkMetrics}</h3>
+                <span>{copy.hundredScale}</span>
               </div>
               <div className="metric-list">
                 {BENCHMARK_METRICS.map((metric) => (
@@ -632,7 +677,7 @@ function LeaderboardView({
               </div>
             </>
           ) : (
-            <div className="empty">选择左侧模型以查看详细得分。</div>
+            <div className="empty">{copy.pickModel}</div>
           )}
         </aside>
       </section>
@@ -642,6 +687,7 @@ function LeaderboardView({
 
 export function Leaderboard({
   activeView,
+  locale = "zh",
   query,
   setActiveView,
   setQuery,
@@ -660,16 +706,17 @@ export function Leaderboard({
     <>
       <div className="content-topbar">
         <div className="topbar-title">
-          Leaderboard Workspace
-          <strong>教学能力与通用基准榜单</strong>
+          {locale === "en" ? "Leaderboard Workspace" : "榜单工作台"}
+          <strong>{locale === "en" ? "Teaching Ability and Benchmark Leaderboard" : "教学能力与通用基准榜单"}</strong>
         </div>
-        <div className="topbar-meta">{`${models.length || 0} models loaded`}</div>
+        <div className="topbar-meta">{locale === "en" ? `${models.length || 0} models loaded` : `已加载 ${models.length || 0} 个模型`}</div>
       </div>
 
       <LeaderboardView
       activeView={activeView}
       domesticCount={domesticCount}
       foreignCount={foreignCount}
+      locale={locale}
       leader={leader}
       models={models}
       query={query}

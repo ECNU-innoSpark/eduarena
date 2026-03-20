@@ -7,10 +7,36 @@ import {
   labelFor,
 } from "./Leaderboard";
 
-const APP_SECTIONS = [
-  { key: "qualitative", label: "Qualitative Review", note: "对话 messages 与人工评分" },
-  { key: "leaderboard", label: "Leaderboard", note: "教学能力与通用基准双轴榜单" },
-];
+const APP_COPY = {
+  zh: {
+    sections: [
+      { key: "qualitative", label: "质性评审", note: "对话 messages 与人工评分" },
+      { key: "leaderboard", label: "榜单", note: "教学能力与通用基准双轴榜单" },
+    ],
+    sidebarCopy: "教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。",
+    currentView: "当前视图",
+    modelRanking: "模型排行",
+    messageReview: "消息评审",
+    annotationDesk: "单条对话评分工作台",
+    langLabel: "语言",
+    langZh: "中文",
+    langEn: "English",
+  },
+  en: {
+    sections: [
+      { key: "qualitative", label: "Qualitative Review", note: "Conversation messages and human ratings" },
+      { key: "leaderboard", label: "Leaderboard", note: "Teaching ability and benchmark ranking" },
+    ],
+    sidebarCopy: "A workspace for teaching leaderboards and qualitative review. Switch workspaces on the left and inspect content on the right.",
+    currentView: "Current View",
+    modelRanking: "Model Ranking",
+    messageReview: "Message Review",
+    annotationDesk: "Single-conversation rating workspace",
+    langLabel: "Language",
+    langZh: "中文",
+    langEn: "English",
+  },
+};
 
 const APP_SHELL_CSS = `
   :root {
@@ -106,6 +132,34 @@ const APP_SHELL_CSS = `
     gap: 8px;
   }
 
+  .language-switcher {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .language-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .language-btn {
+    flex: 1 1 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    cursor: pointer;
+    transition: 180ms ease;
+  }
+
+  .language-btn.active {
+    background: var(--accent);
+    border-color: transparent;
+    color: white;
+  }
+
   .sidebar-group {
     margin-top: 24px;
   }
@@ -195,6 +249,9 @@ function App() {
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState("qualitative");
   const [activeView, setActiveView] = useState("overall");
+  const [locale, setLocale] = useState("zh");
+  const copy = APP_COPY[locale];
+  const sections = copy.sections;
 
   return (
     <>
@@ -210,12 +267,31 @@ function App() {
               {/*<div className="brand-badge">Battle Mode</div>*/}
             </div>
             <p className="sidebar-copy">
-              教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。
+              {copy.sidebarCopy}
             </p>
           </div>
           <nav className="sidebar-nav">
+            <div className="language-switcher">
+              <div className="sidebar-label">{copy.langLabel}</div>
+              <div className="language-row">
+                <button
+                  className={`language-btn ${locale === "zh" ? "active" : ""}`}
+                  onClick={() => setLocale("zh")}
+                  type="button"
+                >
+                  {copy.langZh}
+                </button>
+                <button
+                  className={`language-btn ${locale === "en" ? "active" : ""}`}
+                  onClick={() => setLocale("en")}
+                  type="button"
+                >
+                  {copy.langEn}
+                </button>
+              </div>
+            </div>
             <div className="mode-switcher">
-              {APP_SECTIONS.map((section) => (
+              {sections.map((section) => (
                 <button
                   key={section.key}
                   className={`mode-tab ${activeSection === section.key ? "active" : ""}`}
@@ -228,10 +304,10 @@ function App() {
               ))}
             </div>
             <div className="sidebar-group">
-              <div className="sidebar-label">Current View</div>
+              <div className="sidebar-label">{copy.currentView}</div>
               <button className="mode-tab" type="button">
-                <strong>{activeSection === "leaderboard" ? "Model Ranking" : "Message Review"}</strong>
-                <span>{activeSection === "leaderboard" ? labelFor(activeView) : "单条对话评分工作台"}</span>
+                <strong>{activeSection === "leaderboard" ? copy.modelRanking : copy.messageReview}</strong>
+                <span>{activeSection === "leaderboard" ? labelFor(activeView, locale) : copy.annotationDesk}</span>
               </button>
             </div>
           </nav>
@@ -243,12 +319,13 @@ function App() {
         {activeSection === "leaderboard" ? (
           <Leaderboard
             activeView={activeView}
+            locale={locale}
             query={query}
             setActiveView={setActiveView}
             setQuery={setQuery}
           />
         ) : (
-          <Annotation />
+          <Annotation locale={locale} />
         )}
           </div>
         </section>

@@ -482,7 +482,80 @@ function writeLocalRatings(data) {
   window.localStorage.setItem(LOCAL_RATINGS_KEY, JSON.stringify(data));
 }
 
-export function Annotation() {
+const OVERVIEW_FIELD_LABELS = {
+  zh: {
+    overall: "总体评价",
+    pedagogy: "教学引导",
+    accuracy: "答案准确性",
+    engagement: "互动启发性",
+  },
+  en: {
+    overall: "Overall",
+    pedagogy: "Pedagogy",
+    accuracy: "Accuracy",
+    engagement: "Engagement",
+  },
+};
+
+const ANNOTATION_COPY = {
+  zh: {
+    workspace: "Qualitative Workspace",
+    title: "质性对话评审",
+    meta: "annotation workspace",
+    eyebrow: "qualitative review",
+    hero: "将对话记录、题目背景与人工评分拆成单独工作台，便于像 Arena 一样在独立视图里查看 messages、完成评审并保存结果。",
+    pill: "messages 可视化与评分保存",
+    messagesUnit: "条消息",
+    summary: "评分概览",
+    savedStats: "已保存统计",
+    ratingCount: "当前 rating 数",
+    avg: "总体平均分",
+    overallRating: "整体评分",
+    zeroToFive: "0-5 分",
+    note: "整体备注",
+    save: "保存评分",
+    saveHint: "优先写入服务端 data/qualitative/message_ratings.json；若接口不存在，则回退到当前浏览器本地存储。",
+    recordInfo: "记录信息",
+    selectMessage: "选择消息文件",
+    scenario: "场景",
+    question: "题目",
+    intentDifficulty: "意图 / 难度",
+    turnCount: "轮次数",
+    notProvided: "未提供",
+    messages: "消息",
+    loading: "质性记录加载中。",
+  },
+  en: {
+    workspace: "Qualitative Workspace",
+    title: "Qualitative Conversation Review",
+    meta: "annotation workspace",
+    eyebrow: "qualitative review",
+    hero: "This workspace separates conversation records, task context, and human ratings so you can inspect messages, review them, and save results in a dedicated Arena-style view.",
+    pill: "Message visualization and rating save",
+    messagesUnit: "messages",
+    summary: "Rating Summary",
+    savedStats: "Saved stats",
+    ratingCount: "Saved rating count",
+    avg: "Average overall",
+    overallRating: "Overall Rating",
+    zeroToFive: "0-5 scale",
+    note: "Overall note",
+    save: "Save Ratings",
+    saveHint: "Prefer writing to server-side data/qualitative/message_ratings.json; if the API is unavailable, fall back to browser local storage.",
+    recordInfo: "Record Info",
+    selectMessage: "Message file",
+    scenario: "Scenario",
+    question: "Question",
+    intentDifficulty: "Intent / Difficulty",
+    turnCount: "Turn count",
+    notProvided: "Not provided",
+    messages: "Messages",
+    loading: "Loading qualitative record.",
+  },
+};
+
+export function Annotation({ locale = "zh" }) {
+  const copy = ANNOTATION_COPY[locale] ?? ANNOTATION_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
   const [selectedMessageFile, setSelectedMessageFile] = useState("");
   const [record, setRecord] = useState(null);
@@ -671,25 +744,22 @@ export function Annotation() {
     <>
       <div className="content-topbar">
         <div className="topbar-title">
-          Qualitative Workspace
-          <strong>质性对话评审</strong>
+          {copy.workspace}
+          <strong>{copy.title}</strong>
         </div>
-        <div className="topbar-meta">annotation workspace</div>
+        <div className="topbar-meta">{copy.meta}</div>
       </div>
 
       <section className="panel qualitative">
         <div className="qualitative-hero">
           <div>
-            <span className="eyebrow">qualitative review</span>
-            <h2>质性对话评审</h2>
-            <p>
-              将对话记录、题目背景与人工评分拆成单独工作台，便于像 Arena 一样在独立视图里查看
-              messages、完成评审并保存结果。
-            </p>
+            <span className="eyebrow">{copy.eyebrow}</span>
+            <h2>{copy.title}</h2>
+            <p>{copy.hero}</p>
           </div>
           <div className="qualitative-meta">
-            <span className="pill">messages 可视化与评分保存</span>
-            {record ? <span className="pill">{record.messages.length} 条消息</span> : null}
+            <span className="pill">{copy.pill}</span>
+            {record ? <span className="pill">{record.messages.length} {copy.messagesUnit}</span> : null}
           </div>
         </div>
 
@@ -698,16 +768,16 @@ export function Annotation() {
             <div className="qualitative-sidebar">
               <article className="stats-card">
                 <div className="section-title">
-                  <h3>评分概览</h3>
-                  <span>已保存统计</span>
+                  <h3>{copy.summary}</h3>
+                  <span>{copy.savedStats}</span>
                 </div>
                 <div className="stats-grid">
                   <div className="stats-item">
-                    <span>当前 rating 数</span>
+                    <span>{copy.ratingCount}</span>
                     <strong>{ratingSummary.count}</strong>
                   </div>
                   <div className="stats-item">
-                    <span>总体平均分</span>
+                    <span>{copy.avg}</span>
                     <strong>{formatScore(ratingSummary.averageOverall, 1)}</strong>
                   </div>
                 </div>
@@ -715,14 +785,14 @@ export function Annotation() {
 
               <article className="rating-card">
                 <div className="section-title">
-                  <h3>整体评分</h3>
-                  <span>0-5 分</span>
+                  <h3>{copy.overallRating}</h3>
+                  <span>{copy.zeroToFive}</span>
                 </div>
                 <div className="rating-grid">
                   {OVERVIEW_FIELDS.map((field) => (
                     <label key={field.key} className="field">
                       <div className="slider-head">
-                        <span>{field.label}</span>
+                        <span>{OVERVIEW_FIELD_LABELS[locale]?.[field.key] ?? field.label}</span>
                         <strong className="slider-value">
                           {ratings.overview[field.key] === "" ? "--" : ratings.overview[field.key]}
                         </strong>
@@ -739,7 +809,7 @@ export function Annotation() {
                   ))}
                 </div>
                 <label className="field" style={{ marginTop: 10 }}>
-                  <span>整体备注</span>
+                  <span>{copy.note}</span>
                   <textarea
                     rows="4"
                     value={ratings.overview.note}
@@ -748,23 +818,22 @@ export function Annotation() {
                 </label>
                 <div className="save-row">
                   <button className="primary-btn" type="button" onClick={handleSaveRatings}>
-                    保存评分
+                    {copy.save}
                   </button>
                   <span className="save-hint">
-                    {saveState ||
-                      "优先写入服务端 data/qualitative/message_ratings.json；若接口不存在，则回退到当前浏览器本地存储。"}
+                    {saveState || copy.saveHint}
                   </span>
                 </div>
               </article>
 
               <article className="record-card">
                 <div className="section-title">
-                  <h3>记录信息</h3>
+                  <h3>{copy.recordInfo}</h3>
                   <span>{record.record_id}</span>
                 </div>
                 {messageOptions.length ? (
                   <label className="field" style={{ marginBottom: 16 }}>
-                    <span>选择消息文件</span>
+                    <span>{copy.selectMessage}</span>
                     <select
                       value={selectedMessageFile}
                       onChange={(event) => setSelectedMessageFile(event.target.value)}
@@ -779,21 +848,21 @@ export function Annotation() {
                 ) : null}
                 <div className="record-meta">
                   <div className="meta-row">
-                    <span>场景</span>
+                    <span>{copy.scenario}</span>
                     <strong>{record.scenario}</strong>
                   </div>
                   <div className="meta-row">
-                    <span>题目</span>
+                    <span>{copy.question}</span>
                     <p>{record.question}</p>
                   </div>
                   <div className="meta-row">
-                    <span>意图 / 难度</span>
+                    <span>{copy.intentDifficulty}</span>
                     <strong>
-                      {record.intent || "未提供"} / {record.difficulty || "未提供"}
+                      {record.intent || copy.notProvided} / {record.difficulty || copy.notProvided}
                     </strong>
                   </div>
                   <div className="meta-row">
-                    <span>轮次数</span>
+                    <span>{copy.turnCount}</span>
                     <strong>{record.turn_count ?? "--"}</strong>
                   </div>
                 </div>
@@ -802,8 +871,8 @@ export function Annotation() {
 
             <article className="conversation-panel">
               <div className="section-title">
-                <h3>Messages</h3>
-                <span>{selectedMessageFile || record.record_id} · {record.messages.length} 条消息</span>
+                <h3>{copy.messages}</h3>
+                <span>{selectedMessageFile || record.record_id} · {record.messages.length} {copy.messagesUnit}</span>
               </div>
               <div className="conversation-list">
                 {record.messages.map((message, index) => (
@@ -826,7 +895,7 @@ export function Annotation() {
             </article>
           </div>
         ) : (
-          <div className="empty">质性记录加载中。</div>
+          <div className="empty">{copy.loading}</div>
         )}
       </section>
     </>
