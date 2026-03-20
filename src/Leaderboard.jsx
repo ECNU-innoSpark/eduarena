@@ -266,11 +266,11 @@ export const LEADERBOARD_CSS = `
 //     {"key": "qualityAvg", "label": "教学平均分", "max": 5},
 // ]
 export const QUALITY_METRICS = [
-  { key: "knowledge", label: "知识点讲解", max: 5 },
-  { key: "guided", label: "引导式讲题", max: 5 },
-  { key: "crossDiscipline", label: "跨学科教案", max: 5 },
-  { key: "scenario", label: "情景化出题", max: 5 },
-  { key: "qualityAvg", label: "教学平均分", max: 5 },
+  { key: "knowledge", label: { zh: "知识点讲解", en: "Knowledge Teaching" }, max: 5 },
+  { key: "guided", label: { zh: "引导式讲题", en: "Guided Instruction" }, max: 5 },
+  { key: "crossDiscipline", label: { zh: "跨学科教案", en: "Cross-disciplinary Design" }, max: 5 },
+  { key: "scenario", label: { zh: "情景化出题", en: "Scenario-based Tasks" }, max: 5 },
+  { key: "qualityAvg", label: { zh: "教学平均分", en: "Teaching Avg" }, max: 5 },
 ];
 
 // Python equivalent:
@@ -290,19 +290,19 @@ export const QUALITY_METRICS = [
 //     {"key": "reasoning", "label": "复杂推理", "max": 100},
 // ]
 export const BENCHMARK_METRICS = [
-  { key: "mmluPro", label: "MMLU-Pro", max: 100 },
-  { key: "math", label: "Math", max: 100 },
-  { key: "ifeval", label: "IFEval", max: 100 },
-  { key: "ceval", label: "CEval", max: 100 },
-  { key: "humaneval", label: "HumanEval", max: 100 },
-  { key: "lcbCode", label: "LCB Code", max: 100 },
-  { key: "aime2024", label: "AIME 2024", max: 100 },
-  { key: "simpleQa", label: "SimpleQA", max: 100 },
-  { key: "chineseSimpleQa", label: "Chinese SimpleQA", max: 100 },
-  { key: "benchmarkAvg", label: "综合基准分", max: 100 },
-  { key: "instruction", label: "指令遵循", max: 100 },
-  { key: "worldKnowledge", label: "世界知识", max: 100 },
-  { key: "reasoning", label: "复杂推理", max: 100 },
+  { key: "mmluPro", label: { zh: "MMLU-Pro", en: "MMLU-Pro" }, max: 100 },
+  { key: "math", label: { zh: "Math", en: "Math" }, max: 100 },
+  { key: "ifeval", label: { zh: "IFEval", en: "IFEval" }, max: 100 },
+  { key: "ceval", label: { zh: "CEval", en: "CEval" }, max: 100 },
+  { key: "humaneval", label: { zh: "HumanEval", en: "HumanEval" }, max: 100 },
+  { key: "lcbCode", label: { zh: "LCB Code", en: "LCB Code" }, max: 100 },
+  { key: "aime2024", label: { zh: "AIME 2024", en: "AIME 2024" }, max: 100 },
+  { key: "simpleQa", label: { zh: "SimpleQA", en: "SimpleQA" }, max: 100 },
+  { key: "chineseSimpleQa", label: { zh: "Chinese SimpleQA", en: "Chinese SimpleQA" }, max: 100 },
+  { key: "benchmarkAvg", label: { zh: "综合基准分", en: "Benchmark Avg" }, max: 100 },
+  { key: "instruction", label: { zh: "指令遵循", en: "Instruction Following" }, max: 100 },
+  { key: "worldKnowledge", label: { zh: "世界知识", en: "World Knowledge" }, max: 100 },
+  { key: "reasoning", label: { zh: "复杂推理", en: "Reasoning" }, max: 100 },
 ];
 
 // Python equivalent:
@@ -369,6 +369,10 @@ export function labelFor(key, locale = "zh") {
   if (key === "overall") return locale === "en" ? "Overall Score" : "综合得分";
   const label = VIEW_OPTIONS.find((item) => item.key === key)?.label;
   return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? key);
+}
+
+function localizedLabel(label, locale) {
+  return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? "");
 }
 
 export function useLeaderboardData({ activeView, query }) {
@@ -654,7 +658,7 @@ function LeaderboardView({
                 {QUALITY_METRICS.map((metric) => (
                   <MetricItem
                     key={metric.key}
-                    label={metric.label}
+                    label={localizedLabel(metric.label, locale)}
                     value={selectedModel[metric.key]}
                     max={metric.max}
                   />
@@ -669,7 +673,7 @@ function LeaderboardView({
                 {BENCHMARK_METRICS.map((metric) => (
                   <MetricItem
                     key={metric.key}
-                    label={metric.label}
+                    label={localizedLabel(metric.label, locale)}
                     value={selectedModel[metric.key]}
                     max={metric.max}
                   />
