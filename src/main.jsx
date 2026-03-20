@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ANNOTATION_CSS, Annotation } from "./Annotation";
+import { PAIRWISE_CSS, PairwiseRating } from "./PairwiseRating";
 import {
   LEADERBOARD_CSS,
   Leaderboard,
@@ -11,19 +12,23 @@ const APP_COPY = {
   zh: {
     sections: [
       { key: "qualitative", label: "质性评审", note: "对话 messages 与人工评分" },
+      { key: "pairwise", label: "Pairwise", note: "记录、消息与双候选对比评分" },
       { key: "leaderboard", label: "榜单", note: "教学能力与通用基准双轴榜单" },
     ],
     sidebarCopy: "教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。",
     currentView: "当前视图",
     modelRanking: "模型排行",
     messageReview: "消息评审",
+    pairwiseReview: "Pairwise 评审",
     annotationDesk: "单条对话评分工作台",
+    pairwiseDesk: "记录与消息合并的双候选评审台",
     langLabel: "语言",
     langZh: "中文",
     langEn: "English",
   },
   en: {
     sections: [
+      { key: "pairwise", label: "Pairwise", note: "Record, messages, and pairwise scoring" },
       { key: "qualitative", label: "Qualitative Review", note: "Conversation messages and human ratings" },
       { key: "leaderboard", label: "Leaderboard", note: "Teaching ability and benchmark ranking" },
     ],
@@ -31,7 +36,9 @@ const APP_COPY = {
     currentView: "Current View",
     modelRanking: "Model Ranking",
     messageReview: "Message Review",
+    pairwiseReview: "Pairwise Review",
     annotationDesk: "Single-conversation rating workspace",
+    pairwiseDesk: "Merged record-and-message pairwise workspace",
     langLabel: "Language",
     langZh: "中文",
     langEn: "English",
@@ -243,11 +250,11 @@ const APP_SHELL_CSS = `
   }
 `;
 
-const css = `${APP_SHELL_CSS}\n${ANNOTATION_CSS}\n${LEADERBOARD_CSS}`;
+const css = `${APP_SHELL_CSS}\n${ANNOTATION_CSS}\n${PAIRWISE_CSS}\n${LEADERBOARD_CSS}`;
 
 function App() {
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState("qualitative");
+  const [activeSection, setActiveSection] = useState("pairwise");
   const [activeView, setActiveView] = useState("overall");
   const [locale, setLocale] = useState("zh");
   const copy = APP_COPY[locale];
@@ -294,7 +301,7 @@ function App() {
               {sections.map((section) => (
                 <button
                   key={section.key}
-                  className={`mode-tab ${activeSection === section.key ? "active" : ""}`}
+                  className={`mode-tab ${activeSection === section.key ? "pairwise" : ""}`}
                   onClick={() => setActiveSection(section.key)}
                   type="button"
                 >
@@ -306,8 +313,20 @@ function App() {
             <div className="sidebar-group">
               <div className="sidebar-label">{copy.currentView}</div>
               <button className="mode-tab" type="button">
-                <strong>{activeSection === "leaderboard" ? copy.modelRanking : copy.messageReview}</strong>
-                <span>{activeSection === "leaderboard" ? labelFor(activeView, locale) : copy.annotationDesk}</span>
+                <strong>
+                  {activeSection === "leaderboard"
+                    ? copy.modelRanking
+                    : activeSection === "pairwise"
+                      ? copy.pairwiseReview
+                      : copy.messageReview}
+                </strong>
+                <span>
+                  {activeSection === "leaderboard"
+                    ? labelFor(activeView, locale)
+                    : activeSection === "pairwise"
+                      ? copy.pairwiseDesk
+                      : copy.annotationDesk}
+                </span>
               </button>
             </div>
           </nav>
@@ -325,7 +344,7 @@ function App() {
             setQuery={setQuery}
           />
         ) : (
-          <Annotation locale={locale} />
+          activeSection === "pairwise" ? <PairwiseRating locale={locale} /> : <Annotation locale={locale} />
         )}
           </div>
         </section>
