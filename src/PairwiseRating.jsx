@@ -389,6 +389,8 @@ const PAIRWISE_COPY = {
     collapseConfidence: "收起判定信心",
     expandNote: "展开评审备注",
     collapseNote: "收起评审备注",
+    expandSave: "展开保存操作",
+    collapseSave: "收起保存操作",
     save: "保存 Pairwise 评分",
     saveHint: "优先写入服务端 qualitative ratings；如果接口不可用，则回退到浏览器本地存储。",
     loading: "Pairwise 记录加载中。",
@@ -427,6 +429,8 @@ const PAIRWISE_COPY = {
     collapseConfidence: "Hide confidence",
     expandNote: "Show reviewer note",
     collapseNote: "Hide reviewer note",
+    expandSave: "Show save actions",
+    collapseSave: "Hide save actions",
     save: "Save Pairwise Rating",
     saveHint: "Prefer writing to the server-side qualitative ratings endpoint; if unavailable, fall back to browser local storage.",
     loading: "Loading pairwise record.",
@@ -671,6 +675,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
+  const [isSaveFolded, setIsSaveFolded] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
   const [isConfidenceFolded, setIsConfidenceFolded] = useState(true);
   const [isNoteFolded, setIsNoteFolded] = useState(true);
@@ -809,13 +814,15 @@ export function PairwiseRating({ locale = "zh" }) {
   }, [activeRecord?.record_id, ratingFolderSummary?.fileCount, ratings.pairwise, savedRatingsFile]);
 
   function updatePairwise(field, value) {
-    setRatings((current) => ({
-      ...current,
+    const nextRatings = {
+      ...ratings,
       pairwise: {
-        ...current.pairwise,
+        ...ratings.pairwise,
         [field]: value,
       },
-    }));
+    };
+    setRatings(nextRatings);
+    return nextRatings;
   }
 
   function toggleMessage(index) {
@@ -825,7 +832,23 @@ export function PairwiseRating({ locale = "zh" }) {
     }));
   }
 
-  async function handleSave() {
+  function advanceToNextCandidates() {
+    if (messageOptions.length < 2) return;
+
+    const currentAIndex = messageOptions.findIndex((item) => item.fileName === selectedCandidateAFile);
+    const currentBIndex = messageOptions.findIndex((item) => item.fileName === selectedCandidateBFile);
+    const currentLastIndex = Math.max(currentAIndex, currentBIndex);
+    const nextStartIndex = currentLastIndex >= 0 ? currentLastIndex + 1 : 0;
+    const nextCandidateA = messageOptions[nextStartIndex];
+    const nextCandidateB = messageOptions[nextStartIndex + 1];
+
+    if (!nextCandidateA?.fileName) return;
+
+    setSelectedCandidateAFile(nextCandidateA.fileName);
+    setSelectedCandidateBFile(nextCandidateB?.fileName ?? nextCandidateA.fileName);
+  }
+
+  async function handleSave(ratingsOverride = ratings) {
     if (!activeRecord) return;
 
     const nextFile = {
@@ -840,7 +863,7 @@ export function PairwiseRating({ locale = "zh" }) {
           question: activeRecord.question,
           turn_count: activeRecord.turn_count,
           updatedAt: new Date().toISOString(),
-          pairwise: ratings.pairwise,
+          pairwise: ratingsOverride.pairwise,
           pairwise_meta: {
             candidate_a_file: selectedCandidateAFile,
             candidate_b_file: selectedCandidateBFile,
@@ -871,15 +894,25 @@ export function PairwiseRating({ locale = "zh" }) {
         }
       } catch {}
       setSaveState("Pairwise 评分已保存到服务器端 JSON 文件。");
+      advanceToNextCandidates();
     } catch (error) {
       writeLocalRatings(nextFile);
       setSavedRatingsFile(nextFile);
       const message = String(error?.message ?? "");
       if (message.includes("404")) {
         setSaveState("保存接口不存在，Pairwise 评分已回退到当前浏览器本地存储。");
+        advanceToNextCandidates();
         return;
       }
       setSaveState("服务器保存失败，Pairwise 评分已暂存到当前浏览器本地。");
+      advanceToNextCandidates();
+    }
+  }
+
+  function handleWinnerSelect(value) {
+    const nextRatings = updatePairwise("winner", value);
+    if (isSaveFolded) {
+      handleSave(nextRatings);
     }
   }
 
@@ -930,7 +963,7 @@ export function PairwiseRating({ locale = "zh" }) {
                       <input
                         checked={ratings.pairwise.winner === option.value}
                         name="winner"
-                        onChange={() => updatePairwise("winner", option.value)}
+                        onChange={() => handleWinnerSelect(option.value)}
                         type="radio"
                       />
                       <span>{option.label}</span>
@@ -1018,12 +1051,23 @@ export function PairwiseRating({ locale = "zh" }) {
                 </label>
               )}
 
-              <div className="save-row">
-                <button className="primary-btn" type="button" onClick={handleSave}>
-                  {copy.save}
-                </button>
-                <span className="save-hint">{saveState || copy.saveHint}</span>
-              </div>
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsSaveFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isSaveFolded ? "+" : "-"}</span>
+                <span>{isSaveFolded ? copy.expandSave : copy.collapseSave}</span>
+              </button>
+
+              {isSaveFolded ? null : (
+                <div className="save-row">
+                  <button className="primary-btn" type="button" onClick={handleSave}>
+                    {copy.save}
+                  </button>
+                  <span className="save-hint">{saveState || copy.saveHint}</span>
+                </div>
+              )}
             </article>
 
             <article className="pairwise-candidates">

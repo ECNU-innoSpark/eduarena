@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "savedAt": "2026-03-21T03:32:09.576Z",
+  "records": {
+    "93dd6450-8990-4f38-8289-a5aaff30805c": {
+      "record_id": "93dd6450-8990-4f38-8289-a5aaff30805c",
+      "scenario": "初中诚信故事征集辅导",
+      "question": "batch-初中诚信故事征集辅导-007",
+      "turn_count": 2,
+      "updatedAt": "2026-03-21T03:32:09.576Z",
+      "pairwise": {
+        "winner": "both_bad",
+        "confidence": "",
+        "note": "",
+        "pedagogy": "",
+        "accuracy": "",
+        "clarity": "",
+        "completeness": ""
+      },
+      "pairwise_meta": {
+        "candidate_a_file": "default_generate/初中诚信故事征集辅导/2026-03-18/93dd6450-8990-4f38-8289-a5aaff30805c/conversation-messages.json",
+        "candidate_b_file": "default_generate/初中诚信故事征集辅导/2026-03-18/7c3e4800-ccfc-461c-b7bd-8282d1d37bc5/conversation-messages.json"
+      }
+    }
+  }
+}
