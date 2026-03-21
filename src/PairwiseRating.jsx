@@ -215,6 +215,26 @@ export const PAIRWISE_CSS = `
     margin-bottom: 0;
   }
 
+  .message-fold-toggle {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px dashed var(--line);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .message-fold-toggle:hover {
+    color: var(--text);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
   .segment-group {
     display: grid;
     gap: 8px;
@@ -661,6 +681,16 @@ function renderMessageContent(message) {
   return null;
 }
 
+function getMiddleMessagesToggleLabel(locale, hiddenCount, isExpanded) {
+  if (locale === "en") {
+    return isExpanded
+      ? "Hide middle messages"
+      : `Show ${hiddenCount} middle message${hiddenCount === 1 ? "" : "s"}`;
+  }
+
+  return isExpanded ? "收起中间过程" : `展开中间 ${hiddenCount} 条消息`;
+}
+
 export function PairwiseRating({ locale = "zh" }) {
   const copy = PAIRWISE_COPY[locale] ?? PAIRWISE_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
@@ -675,6 +705,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
+  const [expandedMiddleMessages, setExpandedMiddleMessages] = useState({});
   const [isSaveFolded, setIsSaveFolded] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
   const [isConfidenceFolded, setIsConfidenceFolded] = useState(true);
@@ -1091,6 +1122,12 @@ export function PairwiseRating({ locale = "zh" }) {
                   const selectedFile = isCandidateA ? selectedCandidateAFile : selectedCandidateBFile;
                   const setSelectedFile = isCandidateA ? setSelectedCandidateAFile : setSelectedCandidateBFile;
                   const selectLabel = isCandidateA ? copy.selectCandidateA : copy.selectCandidateB;
+                  const candidateMessages = (showToolMessages
+                    ? candidate.messages
+                    : candidate.messages.filter((message) => message.role !== "tool"));
+                  const hiddenMessageCount = Math.max(candidateMessages.length - 2, 0);
+                  const middleMessagesKey = selectedFile || `${isCandidateA ? "a" : "b"}-${index}`;
+                  const isMiddleExpanded = expandedMiddleMessages[middleMessagesKey] ?? false;
 
                   return (
                     <div
@@ -1117,13 +1154,74 @@ export function PairwiseRating({ locale = "zh" }) {
                         </span>
                       </div>
                       <div className="candidate-body">
-                        {candidate.messages?.length ? (
+                        {candidateMessages.length ? (
                           <div className="conversation-list">
-                            {(showToolMessages
-                              ? candidate.messages
-                              : candidate.messages.filter((message) => message.role !== "tool")).map((message, messageIndex) => (
+                            {candidateMessages.slice(0, 1).map((message, messageIndex) => (
+                              <div
+                                key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${messageIndex}`}
+                                className={`message-card ${message.role || "unknown"}`}
+                              >
+                                <div className="message-head">
+                                  <div className="message-role">
+                                    <span>{message.role || "unknown"}</span>
+                                    {message.role === "tool" && message.tool_call_id ? (
+                                      <span className="message-tool-call-id">{message.tool_call_id}</span>
+                                    ) : null}
+                                  </div>
+                                  <div className="message-index">#1</div>
+                                </div>
+                                <div className="message-body">
+                                  {renderMessageContent(message)}
+                                </div>
+                              </div>
+                            ))}
+
+                            {hiddenMessageCount > 0 ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="message-fold-toggle"
+                                  onClick={() => {
+                                    setExpandedMiddleMessages((current) => ({
+                                      ...current,
+                                      [middleMessagesKey]: !isMiddleExpanded,
+                                    }));
+                                  }}
+                                >
+                                  {getMiddleMessagesToggleLabel(locale, hiddenMessageCount, isMiddleExpanded)}
+                                </button>
+
+                                {isMiddleExpanded
+                                  ? candidateMessages.slice(1, -1).map((message, middleIndex) => {
+                                    const actualIndex = middleIndex + 1;
+                                    return (
+                                      <div
+                                        key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${actualIndex}`}
+                                        className={`message-card ${message.role || "unknown"}`}
+                                      >
+                                        <div className="message-head">
+                                          <div className="message-role">
+                                            <span>{message.role || "unknown"}</span>
+                                            {message.role === "tool" && message.tool_call_id ? (
+                                              <span className="message-tool-call-id">{message.tool_call_id}</span>
+                                            ) : null}
+                                          </div>
+                                          <div className="message-index">#{actualIndex + 1}</div>
+                                        </div>
+                                        <div className="message-body">
+                                          {renderMessageContent(message)}
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                  : null}
+                              </>
+                            ) : null}
+
+                            {candidateMessages.length > 1
+                              ? candidateMessages.slice(-1).map((message) => (
                                 <div
-                                  key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${messageIndex}`}
+                                  key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${candidateMessages.length - 1}`}
                                   className={`message-card ${message.role || "unknown"}`}
                                 >
                                   <div className="message-head">
@@ -1133,13 +1231,14 @@ export function PairwiseRating({ locale = "zh" }) {
                                         <span className="message-tool-call-id">{message.tool_call_id}</span>
                                       ) : null}
                                     </div>
-                                    <div className="message-index">#{messageIndex + 1}</div>
+                                    <div className="message-index">#{candidateMessages.length}</div>
                                   </div>
                                   <div className="message-body">
                                     {renderMessageContent(message)}
                                   </div>
                                 </div>
-                              ))}
+                              ))
+                              : null}
                           </div>
                         ) : (
                           <p>{copy.candidateFallback}</p>
