@@ -273,22 +273,23 @@ export const PAIRWISE_CSS = `
     margin-bottom: 8px;
   }
 
+  .dimension-card .segment-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .dimension-card .segment-option {
+    justify-content: center;
+    padding: 8px 10px;
+    min-width: 0;
+  }
+
   .pairwise-note {
     margin-top: 14px;
   }
 
-  .pairwise-bottom {
-    display: grid;
-    grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
-    gap: 18px;
-    align-items: start;
-  }
-
   @media (max-width: 1080px) {
-    .pairwise-bottom {
-      grid-template-columns: 1fr;
-    }
-
     .dimension-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -296,7 +297,6 @@ export const PAIRWISE_CSS = `
 
   @media (max-width: 720px) {
     .pairwise-candidate-grid,
-    .pairwise-bottom,
     .dimension-grid {
       grid-template-columns: 1fr;
     }
@@ -866,87 +866,85 @@ export function PairwiseRating({ locale = "zh" }) {
 
         {activeRecord ? (
           <div className="pairwise-layout">
-            <div className="pairwise-bottom">
-              <article className="pairwise-scorecard">
-                <div className="section-title">
-                  <h3>{copy.scoring}</h3>
-                  <span>{copy.preferred}</span>
-                </div>
+            <article className="pairwise-scorecard">
+              <div className="section-title">
+                <h3>{copy.scoring}</h3>
+                <span>{copy.preferred}</span>
+              </div>
 
-                <div className="segment-group">
-                  <span>{copy.preferred}</span>
-                  <div className="segment-options segment-options-inline">
-                    {WINNER_OPTIONS.map((option) => (
-                      <label
-                        key={option.value}
-                        className={`segment-option ${ratings.pairwise.winner === option.value ? "active" : ""}`}
-                      >
-                        <input
-                          checked={ratings.pairwise.winner === option.value}
-                          name="winner"
-                          onChange={() => updatePairwise("winner", option.value)}
-                          type="radio"
-                        />
-                        <span>{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="dimension-grid">
-                  {DIMENSIONS.map((dimension) => (
-                    <div key={dimension.key} className="dimension-card">
-                      <strong>{dimension.label}</strong>
-                      <div className="segment-options">
-                        {CHOICE_OPTIONS.map((option) => (
-                          <label
-                            key={option.value}
-                            className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
-                          >
-                            <input
-                              checked={ratings.pairwise[dimension.key] === option.value}
-                              name={dimension.key}
-                              onChange={() => updatePairwise(dimension.key, option.value)}
-                              type="radio"
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+              <div className="segment-group">
+                <span>{copy.preferred}</span>
+                <div className="segment-options segment-options-inline">
+                  {WINNER_OPTIONS.map((option) => (
+                    <label
+                      key={option.value}
+                      className={`segment-option ${ratings.pairwise.winner === option.value ? "active" : ""}`}
+                    >
+                      <input
+                        checked={ratings.pairwise.winner === option.value}
+                        name="winner"
+                        onChange={() => updatePairwise("winner", option.value)}
+                        type="radio"
+                      />
+                      <span>{option.label}</span>
+                    </label>
                   ))}
                 </div>
+              </div>
 
-                <label className="field pairwise-note">
-                  <span>{copy.confidence}</span>
-                  <select
-                    value={ratings.pairwise.confidence}
-                    onChange={(event) => updatePairwise("confidence", event.target.value)}
-                  >
-                    <option value="">--</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </label>
+              <div className="dimension-grid">
+                {DIMENSIONS.map((dimension) => (
+                  <div key={dimension.key} className="dimension-card">
+                    <strong>{dimension.label}</strong>
+                    <div className="segment-options">
+                      {CHOICE_OPTIONS.map((option) => (
+                        <label
+                          key={option.value}
+                          className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
+                        >
+                          <input
+                            checked={ratings.pairwise[dimension.key] === option.value}
+                            name={dimension.key}
+                            onChange={() => updatePairwise(dimension.key, option.value)}
+                            type="radio"
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                <label className="field pairwise-note">
-                  <span>{copy.note}</span>
-                  <textarea
-                    rows="4"
-                    value={ratings.pairwise.note}
-                    onChange={(event) => updatePairwise("note", event.target.value)}
-                  />
-                </label>
+              <label className="field pairwise-note">
+                <span>{copy.confidence}</span>
+                <select
+                  value={ratings.pairwise.confidence}
+                  onChange={(event) => updatePairwise("confidence", event.target.value)}
+                >
+                  <option value="">--</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </label>
 
-                <div className="save-row">
-                  <button className="primary-btn" type="button" onClick={handleSave}>
-                    {copy.save}
-                  </button>
-                  <span className="save-hint">{saveState || copy.saveHint}</span>
-                </div>
-              </article>
-            </div>
+              <label className="field pairwise-note">
+                <span>{copy.note}</span>
+                <textarea
+                  rows="4"
+                  value={ratings.pairwise.note}
+                  onChange={(event) => updatePairwise("note", event.target.value)}
+                />
+              </label>
+
+              <div className="save-row">
+                <button className="primary-btn" type="button" onClick={handleSave}>
+                  {copy.save}
+                </button>
+                <span className="save-hint">{saveState || copy.saveHint}</span>
+              </div>
+            </article>
 
             <article className="pairwise-candidates">
               <div className="conversation-toolbar">
