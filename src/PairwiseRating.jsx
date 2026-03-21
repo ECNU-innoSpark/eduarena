@@ -385,6 +385,10 @@ const PAIRWISE_COPY = {
     dimensions: "维度评分",
     expandDimensions: "展开维度评分",
     collapseDimensions: "收起维度评分",
+    expandConfidence: "展开判定信心",
+    collapseConfidence: "收起判定信心",
+    expandNote: "展开评审备注",
+    collapseNote: "收起评审备注",
     save: "保存 Pairwise 评分",
     saveHint: "优先写入服务端 qualitative ratings；如果接口不可用，则回退到浏览器本地存储。",
     loading: "Pairwise 记录加载中。",
@@ -419,6 +423,10 @@ const PAIRWISE_COPY = {
     dimensions: "Dimension Scoring",
     expandDimensions: "Show dimension scoring",
     collapseDimensions: "Hide dimension scoring",
+    expandConfidence: "Show confidence",
+    collapseConfidence: "Hide confidence",
+    expandNote: "Show reviewer note",
+    collapseNote: "Hide reviewer note",
     save: "Save Pairwise Rating",
     saveHint: "Prefer writing to the server-side qualitative ratings endpoint; if unavailable, fall back to browser local storage.",
     loading: "Loading pairwise record.",
@@ -664,6 +672,8 @@ export function PairwiseRating({ locale = "zh" }) {
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
+  const [isConfidenceFolded, setIsConfidenceFolded] = useState(true);
+  const [isNoteFolded, setIsNoteFolded] = useState(true);
 
   useEffect(() => {
     async function loadRatings() {
@@ -964,27 +974,49 @@ export function PairwiseRating({ locale = "zh" }) {
                 </div>
               )}
 
-              <label className="field pairwise-note">
-                <span>{copy.confidence}</span>
-                <select
-                  value={ratings.pairwise.confidence}
-                  onChange={(event) => updatePairwise("confidence", event.target.value)}
-                >
-                  <option value="">--</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </label>
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsConfidenceFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isConfidenceFolded ? "+" : "-"}</span>
+                <span>{isConfidenceFolded ? copy.expandConfidence : copy.collapseConfidence}</span>
+              </button>
 
-              <label className="field pairwise-note">
-                <span>{copy.note}</span>
-                <textarea
-                  rows="4"
-                  value={ratings.pairwise.note}
-                  onChange={(event) => updatePairwise("note", event.target.value)}
-                />
-              </label>
+              {isConfidenceFolded ? null : (
+                <label className="field pairwise-note">
+                  <span>{copy.confidence}</span>
+                  <select
+                    value={ratings.pairwise.confidence}
+                    onChange={(event) => updatePairwise("confidence", event.target.value)}
+                  >
+                    <option value="">--</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+              )}
+
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsNoteFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isNoteFolded ? "+" : "-"}</span>
+                <span>{isNoteFolded ? copy.expandNote : copy.collapseNote}</span>
+              </button>
+
+              {isNoteFolded ? null : (
+                <label className="field pairwise-note">
+                  <span>{copy.note}</span>
+                  <textarea
+                    rows="4"
+                    value={ratings.pairwise.note}
+                    onChange={(event) => updatePairwise("note", event.target.value)}
+                  />
+                </label>
+              )}
 
               <div className="save-row">
                 <button className="primary-btn" type="button" onClick={handleSave}>
