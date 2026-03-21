@@ -153,6 +153,7 @@ export function normalizeQualitativeRecord(source, fileName = "") {
   //     }
   const messages = Array.isArray(source?.messages) ? source.messages : [];
   const firstUserMessage = messages.find((message) => message?.role === "user")?.content ?? "";
+  const messageCount = messages.length > 0 ? messages.length : null;
 
   return {
     ...source,
@@ -178,7 +179,7 @@ export function normalizeQualitativeRecord(source, fileName = "") {
       ?? source?.student_agent?.profile_summary?.grade_or_age
       ?? source?.profile?.grade_level
       ?? "未提供",
-    turn_count: source?.turn_count ?? messages.length ?? 0,
+    turn_count: messageCount ?? source?.turn_count ?? 0,
     messages,
   };
 }

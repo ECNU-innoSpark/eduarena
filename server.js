@@ -48,6 +48,7 @@ function getFirstUserMessage(source) {
 
 function buildMessageOption(source, fileName) {
   const firstUserMessage = extractMessageText(getFirstUserMessage(source));
+  const messages = getMessages(source);
 
   return {
     fileName,
@@ -75,9 +76,9 @@ function buildMessageOption(source, fileName) {
       ?? source?.sceneName
       ?? "",
     turnCount:
-      source?.turn_count
+      (messages.length > 0 ? messages.length : null)
+      ?? source?.turn_count
       ?? source?.followUpCount
-      ?? getMessages(source).length
       ?? 0,
   };
 }
@@ -202,16 +203,8 @@ function isValidPairwiseRecord(record) {
   if (!isIsoDateString(record.updatedAt)) return false;
 
   const pairwise = record.pairwise;
-  if (!pairwise || typeof pairwise !== "object") return false;
   if (!PAIRWISE_WINNERS.has(pairwise.winner)) return false;
-  if (!PAIRWISE_CONFIDENCE.has(pairwise.confidence ?? "")) return false;
-  if (pairwise.note != null && typeof pairwise.note !== "string") return false;
 
-  for (const dimension of PAIRWISE_DIMENSIONS) {
-    if (!PAIRWISE_DIMENSION_CHOICES.has(pairwise[dimension] ?? "")) {
-      return false;
-    }
-  }
 
   const pairwiseMeta = record.pairwise_meta;
   if (!pairwiseMeta || typeof pairwiseMeta !== "object") return false;
