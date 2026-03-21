@@ -220,6 +220,36 @@ export const PAIRWISE_CSS = `
     gap: 8px;
   }
 
+  .scorecard-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    margin-top: 14px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .scorecard-toggle:hover {
+    color: var(--text);
+  }
+
+  .scorecard-toggle-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1;
+  }
+
   .segment-options {
     display: flex;
     flex-wrap: wrap;
@@ -352,6 +382,9 @@ const PAIRWISE_COPY = {
     dimension: "维度对比",
     confidence: "判定信心",
     note: "评审备注",
+    dimensions: "维度评分",
+    expandDimensions: "展开维度评分",
+    collapseDimensions: "收起维度评分",
     save: "保存 Pairwise 评分",
     saveHint: "优先写入服务端 qualitative ratings；如果接口不可用，则回退到浏览器本地存储。",
     loading: "Pairwise 记录加载中。",
@@ -383,6 +416,9 @@ const PAIRWISE_COPY = {
     dimension: "Dimension comparison",
     confidence: "Confidence",
     note: "Reviewer note",
+    dimensions: "Dimension Scoring",
+    expandDimensions: "Show dimension scoring",
+    collapseDimensions: "Hide dimension scoring",
     save: "Save Pairwise Rating",
     saveHint: "Prefer writing to the server-side qualitative ratings endpoint; if unavailable, fall back to browser local storage.",
     loading: "Loading pairwise record.",
@@ -627,6 +663,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
+  const [isDimensionFolded, setIsDimensionFolded] = useState(true);
 
   useEffect(() => {
     async function loadRatings() {
@@ -892,29 +929,40 @@ export function PairwiseRating({ locale = "zh" }) {
                 </div>
               </div>
 
-              <div className="dimension-grid">
-                {DIMENSIONS.map((dimension) => (
-                  <div key={dimension.key} className="dimension-card">
-                    <strong>{dimension.label}</strong>
-                    <div className="segment-options">
-                      {CHOICE_OPTIONS.map((option) => (
-                        <label
-                          key={option.value}
-                          className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
-                        >
-                          <input
-                            checked={ratings.pairwise[dimension.key] === option.value}
-                            name={dimension.key}
-                            onChange={() => updatePairwise(dimension.key, option.value)}
-                            type="radio"
-                          />
-                          <span>{option.label}</span>
-                        </label>
-                      ))}
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsDimensionFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isDimensionFolded ? "+" : "-"}</span>
+                <span>{isDimensionFolded ? copy.expandDimensions : copy.collapseDimensions}</span>
+              </button>
+
+              {isDimensionFolded ? null : (
+                <div className="dimension-grid">
+                  {DIMENSIONS.map((dimension) => (
+                    <div key={dimension.key} className="dimension-card">
+                      <strong>{dimension.label}</strong>
+                      <div className="segment-options">
+                        {CHOICE_OPTIONS.map((option) => (
+                          <label
+                            key={option.value}
+                            className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
+                          >
+                            <input
+                              checked={ratings.pairwise[dimension.key] === option.value}
+                              name={dimension.key}
+                              onChange={() => updatePairwise(dimension.key, option.value)}
+                              type="radio"
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               <label className="field pairwise-note">
                 <span>{copy.confidence}</span>
