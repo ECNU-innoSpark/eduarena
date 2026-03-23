@@ -2,6 +2,17 @@
 
 set -euo pipefail
 
+NODE_VERSION="v22.11.0"
+
+# Ensure the required Node.js version exists locally before switching to it.
+if ! nvm use "$NODE_VERSION" >/dev/null 2>&1; then
+  nvm install "$NODE_VERSION"
+  nvm use "$NODE_VERSION"
+else
+  nvm use "$NODE_VERSION"
+fi
+
+
 cd "$(dirname "$0")"
 
 if [ ! -d node_modules ]; then
@@ -47,6 +58,7 @@ export API_PORT
 if [ "$API_PORT" != "5174" ]; then
   echo "API port 5174 is in use; using $API_PORT instead."
 fi
+#nvm use
 
 node server.js &
 SERVER_PID=$!
