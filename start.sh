@@ -5,11 +5,19 @@ set -euo pipefail
 NODE_VERSION="v22.11.0"
 
 # Ensure the required Node.js version exists locally before switching to it.
-if ! nvm use "$NODE_VERSION" >/dev/null 2>&1; then
-  nvm install "$NODE_VERSION"
-  nvm use "$NODE_VERSION"
-else
-  nvm use "$NODE_VERSION"
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1090
+  . "$NVM_DIR/nvm.sh"
+fi
+
+if command -v nvm >/dev/null 2>&1; then
+  if ! nvm use "$NODE_VERSION" >/dev/null 2>&1; then
+    nvm install "$NODE_VERSION"
+    nvm use "$NODE_VERSION"
+  else
+    nvm use "$NODE_VERSION"
+  fi
 fi
 
 
@@ -60,7 +68,8 @@ if [ "$API_PORT" != "5174" ]; then
 fi
 #nvm use
 
-node server.js &
+PYTHON_BIN="${PYTHON_BIN:-$(command -v python3 || command -v python)}"
+"$PYTHON_BIN" api_server.py &
 SERVER_PID=$!
 
 npm run dev -- "$@" &
