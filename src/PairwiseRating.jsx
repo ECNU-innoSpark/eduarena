@@ -235,6 +235,13 @@ export const PAIRWISE_CSS = `
     border-color: rgba(255, 255, 255, 0.2);
   }
 
+  .conversation-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
   .segment-group {
     display: grid;
     gap: 8px;
@@ -398,6 +405,7 @@ const PAIRWISE_COPY = {
     selectCandidateB: "选择候选 B 消息",
     messagesUnit: "条消息",
     showTool: "显示 tool",
+    showSystemPrompt: "显示 system prompt",
     preferred: "整体胜负",
     dimension: "维度对比",
     confidence: "判定信心",
@@ -438,6 +446,7 @@ const PAIRWISE_COPY = {
     selectCandidateB: "Select candidate B message",
     messagesUnit: "messages",
     showTool: "Show tool",
+    showSystemPrompt: "Show system prompt",
     preferred: "Overall winner",
     dimension: "Dimension comparison",
     confidence: "Confidence",
@@ -691,6 +700,32 @@ function getMiddleMessagesToggleLabel(locale, hiddenCount, isExpanded) {
   return isExpanded ? "收起中间过程" : `展开中间 ${hiddenCount} 条消息`;
 }
 
+function renderConversationMessageCard({
+  message,
+  messageIndex,
+  slotKey,
+}) {
+  const role = message.role || "unknown";
+  const messageKey = `${slotKey}-${role}-${messageIndex}-${message.tool_call_id || message.id || "message"}`;
+
+  return (
+    <div key={messageKey} className={`message-card ${role}`}>
+      <div className="message-head">
+        <div className="message-role">
+          <span>{role}</span>
+          {message.role === "tool" && message.tool_call_id ? (
+            <span className="message-tool-call-id">{message.tool_call_id}</span>
+          ) : null}
+        </div>
+        <div className="message-index">#{messageIndex + 1}</div>
+      </div>
+      <div className="message-body">
+        {renderMessageContent(message)}
+      </div>
+    </div>
+  );
+}
+
 export function PairwiseRating({ locale = "zh" }) {
   const copy = PAIRWISE_COPY[locale] ?? PAIRWISE_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
@@ -705,6 +740,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
+  const [showSystemMessages, setShowSystemMessages] = useState(false);
   const [expandedMiddleMessages, setExpandedMiddleMessages] = useState({});
   const [isSaveFolded, setIsSaveFolded] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
@@ -1107,14 +1143,24 @@ export function PairwiseRating({ locale = "zh" }) {
                   <h3>{copy.candidates}</h3>
                   <span>{activeRecord.record_id}</span>
                 </div>
-                <label className="conversation-filter">
-                  <input
-                    checked={showToolMessages}
-                    onChange={(event) => setShowToolMessages(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span>{copy.showTool}</span>
-                </label>
+                <div className="conversation-filters">
+                  <label className="conversation-filter">
+                    <input
+                      checked={showToolMessages}
+                      onChange={(event) => setShowToolMessages(event.target.checked)}
+                      type="checkbox"
+                    />
+                    <span>{copy.showTool}</span>
+                  </label>
+                  <label className="conversation-filter">
+                    <input
+                      checked={showSystemMessages}
+                      onChange={(event) => setShowSystemMessages(event.target.checked)}
+                      type="checkbox"
+                    />
+                    <span>{copy.showSystemPrompt}</span>
+                  </label>
+                </div>
               </div>
               <div className="pairwise-candidate-grid">
                 {pairwiseCandidates.candidates.map((candidate, index) => {
@@ -1122,9 +1168,11 @@ export function PairwiseRating({ locale = "zh" }) {
                   const selectedFile = isCandidateA ? selectedCandidateAFile : selectedCandidateBFile;
                   const setSelectedFile = isCandidateA ? setSelectedCandidateAFile : setSelectedCandidateBFile;
                   const selectLabel = isCandidateA ? copy.selectCandidateA : copy.selectCandidateB;
-                  const candidateMessages = (showToolMessages
-                    ? candidate.messages
-                    : candidate.messages.filter((message) => message.role !== "tool"));
+                  const candidateMessages = candidate.messages.filter((message) => {
+                    if (!showToolMessages && message.role === "tool") return false;
+                    if (!showSystemMessages && message.role === "system") return false;
+                    return true;
+                  });
                   const hiddenMessageCount = Math.max(candidateMessages.length - 2, 0);
                   const middleMessagesKey = selectedFile || `${isCandidateA ? "a" : "b"}-${index}`;
                   const isMiddleExpanded = expandedMiddleMessages[middleMessagesKey] ?? false;
@@ -1156,25 +1204,13 @@ export function PairwiseRating({ locale = "zh" }) {
                       <div className="candidate-body">
                         {candidateMessages.length ? (
                           <div className="conversation-list">
-                            {candidateMessages.slice(0, 1).map((message, messageIndex) => (
-                              <div
-                                key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${messageIndex}`}
-                                className={`message-card ${message.role || "unknown"}`}
-                              >
-                                <div className="message-head">
-                                  <div className="message-role">
-                                    <span>{message.role || "unknown"}</span>
-                                    {message.role === "tool" && message.tool_call_id ? (
-                                      <span className="message-tool-call-id">{message.tool_call_id}</span>
-                                    ) : null}
-                                  </div>
-                                  <div className="message-index">#1</div>
-                                </div>
-                                <div className="message-body">
-                                  {renderMessageContent(message)}
-                                </div>
-                              </div>
-                            ))}
+                            {candidateMessages.slice(0, 1).map((message, messageIndex) =>
+                              renderConversationMessageCard({
+                                message,
+                                messageIndex,
+                                slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                              }),
+                            )}
 
                             {hiddenMessageCount > 0 ? (
                               <>
@@ -1194,50 +1230,24 @@ export function PairwiseRating({ locale = "zh" }) {
                                 {isMiddleExpanded
                                   ? candidateMessages.slice(1, -1).map((message, middleIndex) => {
                                     const actualIndex = middleIndex + 1;
-                                    return (
-                                      <div
-                                        key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${actualIndex}`}
-                                        className={`message-card ${message.role || "unknown"}`}
-                                      >
-                                        <div className="message-head">
-                                          <div className="message-role">
-                                            <span>{message.role || "unknown"}</span>
-                                            {message.role === "tool" && message.tool_call_id ? (
-                                              <span className="message-tool-call-id">{message.tool_call_id}</span>
-                                            ) : null}
-                                          </div>
-                                          <div className="message-index">#{actualIndex + 1}</div>
-                                        </div>
-                                        <div className="message-body">
-                                          {renderMessageContent(message)}
-                                        </div>
-                                      </div>
-                                    );
+                                    return renderConversationMessageCard({
+                                      message,
+                                      messageIndex: actualIndex,
+                                      slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                                    });
                                   })
                                   : null}
                               </>
                             ) : null}
 
                             {candidateMessages.length > 1
-                              ? candidateMessages.slice(-1).map((message) => (
-                                <div
-                                  key={`${isCandidateA ? "a" : "b"}-${message.role || "unknown"}-${candidateMessages.length - 1}`}
-                                  className={`message-card ${message.role || "unknown"}`}
-                                >
-                                  <div className="message-head">
-                                    <div className="message-role">
-                                      <span>{message.role || "unknown"}</span>
-                                      {message.role === "tool" && message.tool_call_id ? (
-                                        <span className="message-tool-call-id">{message.tool_call_id}</span>
-                                      ) : null}
-                                    </div>
-                                    <div className="message-index">#{candidateMessages.length}</div>
-                                  </div>
-                                  <div className="message-body">
-                                    {renderMessageContent(message)}
-                                  </div>
-                                </div>
-                              ))
+                              ? candidateMessages.slice(-1).map((message) =>
+                                renderConversationMessageCard({
+                                  message,
+                                  messageIndex: candidateMessages.length - 1,
+                                  slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                                }),
+                              )
                               : null}
                           </div>
                         ) : (
