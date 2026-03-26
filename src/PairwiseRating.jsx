@@ -816,7 +816,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadMessageOptions() {
-      const response = await fetch("/api/qualitative-messages");
+      const response = await fetch("/api/qualitative-messages?multi_model_only=1");
       if (!response.ok) throw new Error(`message options failed:${response.status}`);
 
       const items = await response.json();

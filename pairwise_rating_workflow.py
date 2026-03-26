@@ -100,6 +100,11 @@ def summarize_records(records):
     return {"count": len(keys), "keys": keys}
 
 
+def get_message_question_folder(file_name):
+    parts = [part for part in str(file_name or "").split("/") if part]
+    return "/".join(parts[:-2]) if len(parts) > 2 else ""
+
+
 def ensure_dir(path):
     path.mkdir(parents=True, exist_ok=True)
 
@@ -262,7 +267,7 @@ class PairwiseRatingWorkflow:
                 snapshots.append({"name": file_path.name, "filePath": str(file_path), "data": data})
         return snapshots
 
-    def read_message_options(self):
+    def read_message_options(self, multi_model_only=False):
         items = []
         if self.paths.messages_v4_dir.exists():
             file_paths = sorted(
@@ -276,6 +281,13 @@ class PairwiseRatingWorkflow:
                 conversation_path = file_path.parent / "conversation-messages.json"
                 relative_path = conversation_path.relative_to(self.paths.messages_v4_dir).as_posix()
                 items.append(build_message_option(data, relative_path))
+
+        if multi_model_only:
+            folder_counts = {}
+            for item in items:
+                folder_name = get_message_question_folder(item.get("fileName"))
+                folder_counts[folder_name] = folder_counts.get(folder_name, 0) + 1
+            items = [item for item in items if folder_counts.get(get_message_question_folder(item.get("fileName")), 0) > 1]
 
         return sorted(items, key=lambda item: (str(item.get("scenario", "")), str(item.get("label", ""))))
 

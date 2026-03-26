@@ -56,6 +56,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         query = parse_qs(parsed.query)
         file_name = query.get("file", [None])[0]
         folder_name = query.get("folder", [None])[0]
+        multi_model_only = query.get("multi_model_only", ["0"])[0] in {"1", "true", "yes"}
         if file_name:
             record = workflow.read_message_record(file_name, folder_name=folder_name)
             if record is None:
@@ -64,7 +65,7 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._send_json(record)
             return
 
-        self._send_json(workflow.read_message_options())
+        self._send_json(workflow.read_message_options(multi_model_only=multi_model_only))
 
     def handle_ratings_folder(self, parsed):
         query = parse_qs(parsed.query)
