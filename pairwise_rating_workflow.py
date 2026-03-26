@@ -163,10 +163,18 @@ class PairwiseRatingWorkflow:
     def __init__(self, paths):
         self.paths = paths
 
-    def resolve_message_file(self, file_name):
+    def resolve_message_file(self, file_name, folder_name=None):
         normalized = str(file_name or "").replace("\\", "/").lstrip("/")
+        normalized_folder = str(folder_name or "").replace("\\", "/").strip("/")
         if not normalized:
             return None
+
+        if normalized_folder:
+            folder_path = self.resolve_message_folder(normalized_folder)
+            if folder_path is not None:
+                file_path = (folder_path / normalized).resolve()
+                if is_inside_dir(folder_path, file_path):
+                    return file_path
 
         if normalized.startswith("v1/"):
             file_path = (self.paths.legacy_messages_dir / normalized[3:]).resolve()
@@ -198,8 +206,43 @@ class PairwiseRatingWorkflow:
 
         return None
 
-    def read_message_record(self, file_name):
-        file_path = self.resolve_message_file(file_name)
+    def resolve_message_folder(self, folder_name):
+        normalized = str(folder_name or "").replace("\\", "/").strip("/")
+        if not normalized:
+            return None
+
+        if normalized.startswith("v1/"):
+            folder_path = (self.paths.legacy_messages_dir / normalized[3:]).resolve()
+            return folder_path if is_inside_dir(self.paths.legacy_messages_dir, folder_path) else None
+
+        if normalized.startswith("v2/"):
+            folder_path = (self.paths.messages_v2_dir / normalized[3:]).resolve()
+            return folder_path if is_inside_dir(self.paths.messages_v2_dir, folder_path) else None
+
+        if normalized.startswith("v3/"):
+            folder_path = (self.paths.messages_v3_dir / normalized[3:]).resolve()
+            return folder_path if is_inside_dir(self.paths.messages_v3_dir, folder_path) else None
+
+        if normalized.startswith("v4/"):
+            folder_path = (self.paths.messages_v4_dir / normalized[3:]).resolve()
+            return folder_path if is_inside_dir(self.paths.messages_v4_dir, folder_path) else None
+
+        v4_path = (self.paths.messages_v4_dir / normalized).resolve()
+        if is_inside_dir(self.paths.messages_v4_dir, v4_path):
+            return v4_path
+
+        v3_path = (self.paths.messages_v3_dir / normalized).resolve()
+        if is_inside_dir(self.paths.messages_v3_dir, v3_path):
+            return v3_path
+
+        v2_path = (self.paths.messages_v2_dir / normalized).resolve()
+        if is_inside_dir(self.paths.messages_v2_dir, v2_path):
+            return v2_path
+
+        return None
+
+    def read_message_record(self, file_name, folder_name=None):
+        file_path = self.resolve_message_file(file_name, folder_name=folder_name)
         if not file_path or not file_path.exists():
             return None
         return read_json(file_path)

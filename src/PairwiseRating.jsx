@@ -700,6 +700,45 @@ function getMiddleMessagesToggleLabel(locale, hiddenCount, isExpanded) {
   return isExpanded ? "收起中间过程" : `展开中间 ${hiddenCount} 条消息`;
 }
 
+function splitMessagePath(fileName) {
+  return String(fileName || "")
+    .split("/")
+    .filter(Boolean);
+}
+
+function getCandidateQuestionFolder(fileName) {
+  const parts = splitMessagePath(fileName);
+  return parts.length > 2 ? parts.slice(0, -2).join("/") : "";
+}
+
+function getCandidateVariant(fileName) {
+  const parts = splitMessagePath(fileName);
+  return parts.length > 1 ? parts.slice(-2).join("/") : String(fileName || "");
+}
+
+function getCandidateVariantLabel(fileName) {
+  const parts = splitMessagePath(fileName);
+  return parts.at(-2) || String(fileName || "");
+}
+
+function buildCandidateFileFromFolder(folderName, variantFile) {
+  const folder = String(folderName || "").replace(/^\/+|\/+$/g, "");
+  const variant = String(variantFile || "").replace(/^\/+|\/+$/g, "");
+  if (!folder) return variant;
+  if (!variant) return "";
+  return `${folder}/${variant}`;
+}
+
+function pickDefaultCandidateBVariant(items, candidateAFile) {
+  const candidateAFolder = getCandidateQuestionFolder(candidateAFile);
+  const candidateAVariant = getCandidateVariant(candidateAFile);
+  const siblingVariants = items
+    .filter((item) => getCandidateQuestionFolder(item.fileName) === candidateAFolder)
+    .map((item) => getCandidateVariant(item.fileName));
+  const uniqueVariants = [...new Set(siblingVariants)];
+  return uniqueVariants.find((variant) => variant !== candidateAVariant) ?? uniqueVariants[0] ?? candidateAVariant;
+}
+
 function renderConversationMessageCard({
   message,
   messageIndex,
@@ -730,7 +769,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const copy = PAIRWISE_COPY[locale] ?? PAIRWISE_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
   const [selectedCandidateAFile, setSelectedCandidateAFile] = useState("");
-  const [selectedCandidateBFile, setSelectedCandidateBFile] = useState("");
+  const [selectedCandidateBVariant, setSelectedCandidateBVariant] = useState("");
   const [candidateARawRecord, setCandidateARawRecord] = useState(null);
   const [candidateBRawRecord, setCandidateBRawRecord] = useState(null);
   const [candidateARecord, setCandidateARecord] = useState(null);
@@ -784,7 +823,7 @@ export function PairwiseRating({ locale = "zh" }) {
       setMessageOptions(items);
       if (items[0]?.fileName) {
         setSelectedCandidateAFile(items[0].fileName);
-        setSelectedCandidateBFile(items[1]?.fileName ?? items[0].fileName);
+        setSelectedCandidateBVariant(pickDefaultCandidateBVariant(items, items[0].fileName));
       }
     }
 
@@ -827,24 +866,60 @@ export function PairwiseRating({ locale = "zh" }) {
   }, [selectedCandidateAFile]);
 
   useEffect(() => {
-    if (!selectedCandidateBFile) return;
+    if (!selectedCandidateAFile || !selectedCandidateBVariant) return;
 
     async function loadCandidateRecord() {
-      const response = await fetch(`/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateBFile)}`);
+      const candidateAFolder = getCandidateQuestionFolder(selectedCandidateAFile);
+      const response = await fetch(
+        `/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateBVariant)}&folder=${encodeURIComponent(candidateAFolder)}`,
+      );
       if (!response.ok) throw new Error(`candidate B failed:${response.status}`);
 
       const nextRaw = await response.json();
+      const resolvedCandidateBFile = buildCandidateFileFromFolder(candidateAFolder, selectedCandidateBVariant);
       setCandidateBRawRecord(nextRaw);
-      setCandidateBRecord(normalizeQualitativeRecord(nextRaw, selectedCandidateBFile));
+      setCandidateBRecord(normalizeQualitativeRecord(nextRaw, resolvedCandidateBFile));
     }
 
     loadCandidateRecord().catch(() => {
       setCandidateBRawRecord(null);
       setCandidateBRecord(null);
     });
-  }, [selectedCandidateBFile]);
+  }, [selectedCandidateAFile, selectedCandidateBVariant]);
+
+  useEffect(() => {
+    if (!selectedCandidateAFile || !messageOptions.length) return;
+
+    const candidateAFolder = getCandidateQuestionFolder(selectedCandidateAFile);
+    const availableVariants = [...new Set(
+      messageOptions
+        .filter((item) => getCandidateQuestionFolder(item.fileName) === candidateAFolder)
+        .map((item) => getCandidateVariant(item.fileName)),
+    )];
+    if (!availableVariants.length) return;
+
+    if (!availableVariants.includes(selectedCandidateBVariant)) {
+      setSelectedCandidateBVariant(pickDefaultCandidateBVariant(messageOptions, selectedCandidateAFile));
+    }
+  }, [messageOptions, selectedCandidateAFile, selectedCandidateBVariant]);
 
   const activeRecord = candidateARecord ?? candidateBRecord ?? null;
+
+  const candidateBOptions = useMemo(() => {
+    const variantMap = new Map();
+    messageOptions.forEach((item) => {
+      const variantFile = getCandidateVariant(item.fileName);
+      if (variantMap.has(variantFile)) return;
+      variantMap.set(variantFile, {
+        fileName: variantFile,
+        label: getCandidateVariantLabel(item.fileName),
+        scenario: item.scenario,
+        recordId: item.recordId,
+      });
+    });
+
+    return Array.from(variantMap.values()).sort((left, right) => left.label.localeCompare(right.label));
+  }, [messageOptions]);
 
   useEffect(() => {
     setRatings(normalizePairwiseRatings(activeRecord, savedRatingsFile));
@@ -900,19 +975,15 @@ export function PairwiseRating({ locale = "zh" }) {
   }
 
   function advanceToNextCandidates() {
-    if (messageOptions.length < 2) return;
+    if (!messageOptions.length) return;
 
     const currentAIndex = messageOptions.findIndex((item) => item.fileName === selectedCandidateAFile);
-    const currentBIndex = messageOptions.findIndex((item) => item.fileName === selectedCandidateBFile);
-    const currentLastIndex = Math.max(currentAIndex, currentBIndex);
-    const nextStartIndex = currentLastIndex >= 0 ? currentLastIndex + 1 : 0;
-    const nextCandidateA = messageOptions[nextStartIndex];
-    const nextCandidateB = messageOptions[nextStartIndex + 1];
+    const nextCandidateA = messageOptions[currentAIndex >= 0 ? currentAIndex + 1 : 0];
 
     if (!nextCandidateA?.fileName) return;
 
     setSelectedCandidateAFile(nextCandidateA.fileName);
-    setSelectedCandidateBFile(nextCandidateB?.fileName ?? nextCandidateA.fileName);
+    setSelectedCandidateBVariant(pickDefaultCandidateBVariant(messageOptions, nextCandidateA.fileName));
   }
 
   async function handleSave(ratingsOverride = ratings) {
@@ -933,7 +1004,10 @@ export function PairwiseRating({ locale = "zh" }) {
           pairwise: ratingsOverride.pairwise,
           pairwise_meta: {
             candidate_a_file: selectedCandidateAFile,
-            candidate_b_file: selectedCandidateBFile,
+            candidate_b_file: buildCandidateFileFromFolder(
+              getCandidateQuestionFolder(selectedCandidateAFile),
+              selectedCandidateBVariant,
+            ),
           },
         },
       },
@@ -1165,9 +1239,10 @@ export function PairwiseRating({ locale = "zh" }) {
               <div className="pairwise-candidate-grid">
                 {pairwiseCandidates.candidates.map((candidate, index) => {
                   const isCandidateA = index === 0;
-                  const selectedFile = isCandidateA ? selectedCandidateAFile : selectedCandidateBFile;
-                  const setSelectedFile = isCandidateA ? setSelectedCandidateAFile : setSelectedCandidateBFile;
+                  const selectedFile = isCandidateA ? selectedCandidateAFile : selectedCandidateBVariant;
+                  const setSelectedFile = isCandidateA ? setSelectedCandidateAFile : setSelectedCandidateBVariant;
                   const selectLabel = isCandidateA ? copy.selectCandidateA : copy.selectCandidateB;
+                  const selectOptions = isCandidateA ? messageOptions : candidateBOptions;
                   const candidateMessages = candidate.messages.filter((message) => {
                     if (!showToolMessages && message.role === "tool") return false;
                     if (!showSystemMessages && message.role === "system") return false;
@@ -1188,7 +1263,7 @@ export function PairwiseRating({ locale = "zh" }) {
                           fieldClassName="field candidate-picker"
                           label={selectLabel}
                           onChange={setSelectedFile}
-                          options={messageOptions}
+                          options={selectOptions}
                           value={selectedFile}
                         />
                       ) : null}

@@ -55,8 +55,9 @@ class ApiHandler(BaseHTTPRequestHandler):
     def handle_qualitative_messages(self, parsed):
         query = parse_qs(parsed.query)
         file_name = query.get("file", [None])[0]
+        folder_name = query.get("folder", [None])[0]
         if file_name:
-            record = workflow.read_message_record(file_name)
+            record = workflow.read_message_record(file_name, folder_name=folder_name)
             if record is None:
                 self._send_json({"error": "Message record not found"}, status=404)
                 return
