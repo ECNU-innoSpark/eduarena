@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node start.mjs",
+    "start": "bash ./deploy.sh",
     "dev": "vite",
     "build": "vite build",
+    "deploy": "bash ./deploy.sh",
     "preview": "vite preview"
   },
   "dependencies": {

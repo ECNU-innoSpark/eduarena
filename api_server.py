@@ -1,13 +1,46 @@
 #!/usr/bin/env python3
 
 import json
+import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 from pairwise_rating_workflow import create_default_workflow
 
 workflow = create_default_workflow()
+ROOT_DIR = Path(__file__).resolve().parent
+DIST_DIR = ROOT_DIR / "dist"
+DATA_DIR = ROOT_DIR / "data"
+
+
+def resolve_static_path(request_path):
+    decoded_path = unquote(request_path or "/")
+
+    if decoded_path.startswith("/data/"):
+        candidate = (ROOT_DIR / decoded_path.lstrip("/")).resolve()
+        try:
+            candidate.relative_to(DATA_DIR)
+        except ValueError:
+            return None
+        return candidate if candidate.is_file() else None
+
+    relative_path = decoded_path.lstrip("/") or "index.html"
+    candidate = (DIST_DIR / relative_path).resolve()
+    try:
+        candidate.relative_to(DIST_DIR)
+    except ValueError:
+        return None
+
+    if candidate.is_file():
+        return candidate
+
+    if "." not in Path(relative_path).name:
+        index_file = (DIST_DIR / "index.html").resolve()
+        return index_file if index_file.is_file() else None
+
+    return None
 
 
 class ApiHandler(BaseHTTPRequestHandler):
@@ -24,6 +57,15 @@ class ApiHandler(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length) if content_length > 0 else b"{}"
         return json.loads(body.decode("utf-8"))
 
+    def _send_file(self, file_path):
+        body = file_path.read_bytes()
+        content_type = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         parsed = urlparse(self.path)
 
@@ -35,6 +77,11 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/api/qualitative-ratings":
             self._send_json(workflow.read_aggregated_ratings())
+            return
+
+        static_file = resolve_static_path(parsed.path)
+        if static_file is not None:
+            self._send_file(static_file)
             return
 
         self._send_json({"error": "Not Found"}, status=404)
@@ -81,6 +128,7 @@ def main():
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("API_PORT") or os.environ.get("PORT") or "5174")
     server = ThreadingHTTPServer((host, port), ApiHandler)
+    print(f"Web: http://{host}:{port}/")
     print(f"API: http://{host}:{port}/api/qualitative-ratings")
     server.serve_forever()
 
