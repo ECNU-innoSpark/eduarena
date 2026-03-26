@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { appUrl } from "./appUrl";
 import { formatScore, parseCsv, parseNumber } from "./qualitativeUtils";
 
 export const LEADERBOARD_CSS = `
@@ -381,7 +382,7 @@ export function useLeaderboardData({ activeView, query }) {
 
   useEffect(() => {
     async function load() {
-      const response = await fetch("/data/quantitive/main_experiments.csv");
+      const response = await fetch(appUrl("/data/quantitive/main_experiments.csv"));
       const text = await response.text();
       const rows = parseCsv(text.replace(/^\uFEFF/, ""));
       const items = rows.slice(1).map((cols) => ({

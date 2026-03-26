@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { ANNOTATION_CSS } from "./Annotation";
+import { appUrl } from "./appUrl";
 import { TypeaheadDropdown } from "./Components";
 import { normalizeQualitativeRecord } from "./qualitativeUtils";
 
@@ -791,12 +792,12 @@ export function PairwiseRating({ locale = "zh" }) {
       let scoreFile = readLocalRatings() ?? { version: 1, records: {} };
 
       try {
-        const response = await fetch("/api/qualitative-ratings");
+        const response = await fetch(appUrl("/api/qualitative-ratings"));
         if (response.ok) {
           scoreFile = await response.json();
           writeLocalRatings(scoreFile);
         } else {
-          const fallbackResponse = await fetch("/data/qualitative/message_ratings.json");
+          const fallbackResponse = await fetch(appUrl("/data/qualitative/message_ratings.json"));
           if (fallbackResponse.ok) {
             scoreFile = await fallbackResponse.json();
             writeLocalRatings(scoreFile);
@@ -816,7 +817,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadMessageOptions() {
-      const response = await fetch("/api/qualitative-messages?multi_model_only=1");
+      const response = await fetch(appUrl("/api/qualitative-messages?multi_model_only=1"));
       if (!response.ok) throw new Error(`message options failed:${response.status}`);
 
       const items = await response.json();
@@ -834,7 +835,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadRatingFolderSummary() {
-      const response = await fetch("/api/qualitative-ratings-folder?kind=pairwise");
+      const response = await fetch(appUrl("/api/qualitative-ratings-folder?kind=pairwise"));
       if (!response.ok) {
         throw new Error(`folder summary failed:${response.status}`);
       }
@@ -851,7 +852,9 @@ export function PairwiseRating({ locale = "zh" }) {
     if (!selectedCandidateAFile) return;
 
     async function loadCandidateRecord() {
-      const response = await fetch(`/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateAFile)}`);
+      const response = await fetch(
+        appUrl(`/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateAFile)}`),
+      );
       if (!response.ok) throw new Error(`candidate A failed:${response.status}`);
 
       const nextRaw = await response.json();
@@ -871,7 +874,9 @@ export function PairwiseRating({ locale = "zh" }) {
     async function loadCandidateRecord() {
       const candidateAFolder = getCandidateQuestionFolder(selectedCandidateAFile);
       const response = await fetch(
-        `/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateBVariant)}&folder=${encodeURIComponent(candidateAFolder)}`,
+        appUrl(
+          `/api/qualitative-messages?file=${encodeURIComponent(selectedCandidateBVariant)}&folder=${encodeURIComponent(candidateAFolder)}`,
+        ),
       );
       if (!response.ok) throw new Error(`candidate B failed:${response.status}`);
 
@@ -1014,7 +1019,7 @@ export function PairwiseRating({ locale = "zh" }) {
     };
 
     try {
-      const response = await fetch("/api/qualitative-ratings", {
+      const response = await fetch(appUrl("/api/qualitative-ratings"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1028,7 +1033,7 @@ export function PairwiseRating({ locale = "zh" }) {
       writeLocalRatings(savedFile);
       setSavedRatingsFile(savedFile);
       try {
-        const folderResponse = await fetch("/api/qualitative-ratings-folder?kind=pairwise");
+        const folderResponse = await fetch(appUrl("/api/qualitative-ratings-folder?kind=pairwise"));
         if (folderResponse.ok) {
           const folderSummary = await folderResponse.json();
           setRatingFolderSummary(folderSummary);

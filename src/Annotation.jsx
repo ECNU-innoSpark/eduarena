@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { appUrl } from "./appUrl";
 import { TypeaheadDropdown } from "./Components";
 import {
   clampRating,
@@ -678,13 +679,13 @@ export function Annotation({ locale = "zh" }) {
       let scoreSource = scoreFile.records && Object.keys(scoreFile.records).length ? "local" : "empty";
 
       try {
-        const scoreResponse = await fetch("/api/qualitative-ratings");
+        const scoreResponse = await fetch(appUrl("/api/qualitative-ratings"));
         if (scoreResponse.ok) {
           scoreFile = await scoreResponse.json();
           writeLocalRatings(scoreFile);
           scoreSource = "server";
         } else {
-          const fallbackResponse = await fetch("/data/qualitative/message_ratings.json");
+          const fallbackResponse = await fetch(appUrl("/data/qualitative/message_ratings.json"));
           if (fallbackResponse.ok) {
             scoreFile = await fallbackResponse.json();
             writeLocalRatings(scoreFile);
@@ -692,7 +693,7 @@ export function Annotation({ locale = "zh" }) {
           }
         }
       } catch {
-        const fallbackResponse = await fetch("/data/qualitative/message_ratings.json");
+        const fallbackResponse = await fetch(appUrl("/data/qualitative/message_ratings.json"));
         if (fallbackResponse.ok) {
           scoreFile = await fallbackResponse.json();
           writeLocalRatings(scoreFile);
@@ -713,7 +714,7 @@ export function Annotation({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadMessageOptions() {
-      const response = await fetch("/api/qualitative-messages");
+      const response = await fetch(appUrl("/api/qualitative-messages"));
       if (!response.ok) {
         throw new Error(`message options failed:${response.status}`);
       }
@@ -729,7 +730,7 @@ export function Annotation({ locale = "zh" }) {
       setMessageOptions([]);
       setSelectedMessageFile("");
       try {
-        const response = await fetch("/data/qualitative/records.json");
+        const response = await fetch(appUrl("/data/qualitative/records.json"));
         const fallbackRecord = normalizeQualitativeRecord(await response.json(), "records.json");
         setRecord(fallbackRecord);
       } catch {
@@ -742,7 +743,9 @@ export function Annotation({ locale = "zh" }) {
     if (!selectedMessageFile) return;
 
     async function loadSelectedRecord() {
-      const response = await fetch(`/api/qualitative-messages?file=${encodeURIComponent(selectedMessageFile)}`);
+      const response = await fetch(
+        appUrl(`/api/qualitative-messages?file=${encodeURIComponent(selectedMessageFile)}`),
+      );
       if (!response.ok) {
         throw new Error(`record failed:${response.status}`);
       }
@@ -766,7 +769,7 @@ export function Annotation({ locale = "zh" }) {
 
   useEffect(() => {
     async function loadRatingFolderSummary() {
-      const response = await fetch("/api/qualitative-ratings-folder");
+      const response = await fetch(appUrl("/api/qualitative-ratings-folder"));
       if (!response.ok) {
         throw new Error(`folder summary failed:${response.status}`);
       }
@@ -821,7 +824,7 @@ export function Annotation({ locale = "zh" }) {
     };
 
     try {
-      const response = await fetch("/api/qualitative-ratings", {
+      const response = await fetch(appUrl("/api/qualitative-ratings"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -837,7 +840,7 @@ export function Annotation({ locale = "zh" }) {
       writeLocalRatings(savedFile);
       setSavedScoreFile(savedFile);
       try {
-        const folderResponse = await fetch("/api/qualitative-ratings-folder");
+        const folderResponse = await fetch(appUrl("/api/qualitative-ratings-folder"));
         if (folderResponse.ok) {
           const folderSummary = await folderResponse.json();
           setRatingFolderSummary(folderSummary);
