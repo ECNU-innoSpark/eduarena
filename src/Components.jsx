@@ -22,13 +22,16 @@ export function TypeaheadDropdown({
 }) {
   const rootRef = useRef(null);
   const selectedOption = options.find((option) => option.fileName === value) ?? null;
+  const displayValue = selectedOption
+    ? `${selectedOption.fileName} · ${selectedOption.label}`
+    : "";
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const normalizedQuery = query.trim().toLowerCase();
 
   useEffect(() => {
-    setQuery(selectedOption ? `${selectedOption.fileName} · ${selectedOption.label}` : "");
-  }, [selectedOption]);
+    setQuery(displayValue);
+  }, [displayValue]);
 
   useEffect(() => {
     function handlePointerDown(event) {
@@ -58,14 +61,20 @@ export function TypeaheadDropdown({
           className="typeahead-input"
           onBlur={() => {
             if (selectedOption) {
-              setQuery(`${selectedOption.fileName} · ${selectedOption.label}`);
+              setQuery(displayValue);
             }
           }}
           onChange={(event) => {
             setQuery(event.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            // Clear the formatted selected value so new searches match against a fresh query.
+            if (displayValue && query === displayValue) {
+              setQuery("");
+            }
+            setIsOpen(true);
+          }}
           placeholder={selectedOption ? "" : label}
           type="text"
           value={query}
