@@ -12,13 +12,14 @@ export const PAIRWISE_CSS = `
 
   .pairwise {
     padding: 18px;
+    padding-bottom: 112px;
   }
 
   .pairwise-hero {
     display: flex;
     justify-content: space-between;
     gap: 18px;
-    align-items: end;
+    align-items: start;
     margin-bottom: 18px;
   }
 
@@ -29,16 +30,96 @@ export const PAIRWISE_CSS = `
     letter-spacing: -0.04em;
   }
 
-  .pairwise-hero p {
+  .pairwise-hero-copy {
+    position: relative;
+    display: inline-grid;
+    gap: 10px;
+  }
+
+  .pairwise-hero-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.01em;
+  }
+
+  .pairwise-hero-hint::before {
+    content: "⌕";
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .pairwise-hero-hover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 5;
+    width: min(560px, calc(100vw - 96px));
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(25, 24, 22, 0.94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+    pointer-events: none;
+  }
+
+  .pairwise-hero-copy:hover .pairwise-hero-hover,
+  .pairwise-hero-copy:focus-within .pairwise-hero-hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .pairwise-hero-hover p {
     margin: 0;
     max-width: 58ch;
     color: var(--muted);
     line-height: 1.65;
   }
 
+  .pairwise-hero-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
   .pairwise-layout {
     display: grid;
     gap: 18px;
+  }
+
+  .pairwise-bottom-bar {
+    position: sticky;
+    bottom: 18px;
+    z-index: 12;
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+    pointer-events: none;
+  }
+
+  .pairwise-bottom-inner {
+    width: min(720px, calc(100% - 24px));
+    padding: 10px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(34, 33, 30, 0.92);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
   }
 
   .pairwise-candidates,
@@ -50,11 +131,7 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-scorecard {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+    padding: 16px;
   }
 
   .pairwise-candidate-grid {
@@ -287,6 +364,7 @@ export const PAIRWISE_CSS = `
   .segment-options-inline {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .segment-option {
@@ -310,6 +388,17 @@ export const PAIRWISE_CSS = `
   .segment-option input {
     margin: 0;
     accent-color: var(--accent);
+  }
+
+  .pairwise-bottom-inner .segment-option {
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .pairwise-bottom-inner .segment-option span:last-child {
+    white-space: nowrap;
   }
 
   .dimension-grid {
@@ -354,6 +443,16 @@ export const PAIRWISE_CSS = `
   }
 
   @media (max-width: 720px) {
+    .pairwise-hero {
+      flex-direction: column;
+    }
+
+    .pairwise-hero-hover {
+      position: static;
+      width: 100%;
+      margin-top: 6px;
+    }
+
     .pairwise-candidate-grid,
     .dimension-grid {
       grid-template-columns: 1fr;
@@ -363,17 +462,23 @@ export const PAIRWISE_CSS = `
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .pairwise-bottom-bar {
+      bottom: 10px;
+    }
+
+    .pairwise-bottom-inner {
+      width: 100%;
+      padding: 8px;
+    }
+
+    .segment-options-inline {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 `;
 
 const LOCAL_RATINGS_KEY = "hi-react-cc.qualitative-ratings";
-
-const WINNER_OPTIONS = [
-  { value: "a", label: "A 更好" },
-  { value: "b", label: "B 更好" },
-  { value: "tie", label: "平局" },
-  { value: "both_bad", label: "都不好" },
-];
 
 const DIMENSIONS = [
   { key: "pedagogy", label: "专业性" },
@@ -394,6 +499,7 @@ const PAIRWISE_COPY = {
     title: "Pairwise 质性评审",
     meta: "pairwise annotation workspace",
     eyebrow: "pairwise review",
+    hoverHint: "悬停查看说明",
     hero: "将记录信息与完整消息流放在同一块面板里，再把候选回答和胜负判断拆到右侧，适合做 Arena 风格的 pairwise 标注。",
     pill: "记录、消息与 pairwise 评分联动",
     record: "记录与消息",
@@ -408,6 +514,12 @@ const PAIRWISE_COPY = {
     showTool: "显示 tool",
     showSystemPrompt: "显示 system prompt",
     preferred: "整体胜负",
+    winnerOptions: [
+      { value: "a", label: "A 更好" },
+      { value: "b", label: "B 更好" },
+      { value: "tie", label: "平局" },
+      { value: "both_bad", label: "都不好" },
+    ],
     dimension: "维度对比",
     confidence: "判定信心",
     note: "评审备注",
@@ -435,6 +547,7 @@ const PAIRWISE_COPY = {
     title: "Pairwise Review",
     meta: "pairwise annotation workspace",
     eyebrow: "pairwise review",
+    hoverHint: "Hover for details",
     hero: "This view combines record metadata with the full message stream, then separates candidate comparison and pairwise judgment into a dedicated scoring column.",
     pill: "Record, messages, and pairwise scoring",
     record: "Record and Messages",
@@ -449,6 +562,12 @@ const PAIRWISE_COPY = {
     showTool: "Show tool",
     showSystemPrompt: "Show system prompt",
     preferred: "Overall winner",
+    winnerOptions: [
+      { value: "a", label: "A Better" },
+      { value: "b", label: "B Better" },
+      { value: "tie", label: "Tie" },
+      { value: "both_bad", label: "Both Bad" },
+    ],
     dimension: "Dimension comparison",
     confidence: "Confidence",
     note: "Reviewer note",
@@ -1074,148 +1193,27 @@ export function PairwiseRating({ locale = "zh" }) {
 
       <section className="panel pairwise">
         <div className="pairwise-hero">
-          <div>
+          <div className="pairwise-hero-copy">
             <span className="eyebrow">{copy.eyebrow}</span>
             <h2>{copy.title}</h2>
-            <p>{copy.hero}</p>
-          </div>
-          <div className="qualitative-meta">
-            <span className="pill">{copy.summaryCount}: {pairwiseSummary.count}</span>
-            <span className="pill">{copy.pill}</span>
-            {pairwiseCandidates.candidates.length ? (
-              <span className="pill">
-                {pairwiseCandidates.candidates.reduce((sum, candidate) => sum + (candidate.turnCount ?? 0), 0)} {copy.messagesUnit}
-              </span>
-            ) : null}
+            <span className="pairwise-hero-hint">{copy.hoverHint}</span>
+            <div className="pairwise-hero-hover">
+              <p>{copy.hero}</p>
+              <div className="pairwise-hero-pills">
+                <span className="pill">{copy.summaryCount}: {pairwiseSummary.count}</span>
+                <span className="pill">{copy.pill}</span>
+                {pairwiseCandidates.candidates.length ? (
+                  <span className="pill">
+                    {pairwiseCandidates.candidates.reduce((sum, candidate) => sum + (candidate.turnCount ?? 0), 0)} {copy.messagesUnit}
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
 
         {activeRecord ? (
           <div className="pairwise-layout">
-            <article className="pairwise-scorecard">
-              <div className="section-title">
-                <h3>{copy.scoring}</h3>
-                <span>{copy.preferred}</span>
-              </div>
-
-              <div className="segment-group">
-                <span>{copy.preferred}</span>
-                <div className="segment-options segment-options-inline">
-                  {WINNER_OPTIONS.map((option) => (
-                    <label
-                      key={option.value}
-                      className={`segment-option ${ratings.pairwise.winner === option.value ? "active" : ""}`}
-                    >
-                      <input
-                        checked={ratings.pairwise.winner === option.value}
-                        name="winner"
-                        onChange={() => handleWinnerSelect(option.value)}
-                        type="radio"
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsDimensionFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isDimensionFolded ? "+" : "-"}</span>
-                <span>{isDimensionFolded ? copy.expandDimensions : copy.collapseDimensions}</span>
-              </button>
-
-              {isDimensionFolded ? null : (
-                <div className="dimension-grid">
-                  {DIMENSIONS.map((dimension) => (
-                    <div key={dimension.key} className="dimension-card">
-                      <strong>{dimension.label}</strong>
-                      <div className="segment-options">
-                        {CHOICE_OPTIONS.map((option) => (
-                          <label
-                            key={option.value}
-                            className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
-                          >
-                            <input
-                              checked={ratings.pairwise[dimension.key] === option.value}
-                              name={dimension.key}
-                              onChange={() => updatePairwise(dimension.key, option.value)}
-                              type="radio"
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsConfidenceFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isConfidenceFolded ? "+" : "-"}</span>
-                <span>{isConfidenceFolded ? copy.expandConfidence : copy.collapseConfidence}</span>
-              </button>
-
-              {isConfidenceFolded ? null : (
-                <label className="field pairwise-note">
-                  <span>{copy.confidence}</span>
-                  <select
-                    value={ratings.pairwise.confidence}
-                    onChange={(event) => updatePairwise("confidence", event.target.value)}
-                  >
-                    <option value="">--</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </label>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsNoteFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isNoteFolded ? "+" : "-"}</span>
-                <span>{isNoteFolded ? copy.expandNote : copy.collapseNote}</span>
-              </button>
-
-              {isNoteFolded ? null : (
-                <label className="field pairwise-note">
-                  <span>{copy.note}</span>
-                  <textarea
-                    rows="4"
-                    value={ratings.pairwise.note}
-                    onChange={(event) => updatePairwise("note", event.target.value)}
-                  />
-                </label>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsSaveFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isSaveFolded ? "+" : "-"}</span>
-                <span>{isSaveFolded ? copy.expandSave : copy.collapseSave}</span>
-              </button>
-
-              {isSaveFolded ? null : (
-                <div className="save-row">
-                  <button className="primary-btn" type="button" onClick={handleSave}>
-                    {copy.save}
-                  </button>
-                  <span className="save-hint">{saveState || copy.saveHint}</span>
-                </div>
-              )}
-            </article>
-
             <article className="pairwise-candidates">
               <div className="conversation-toolbar">
                 <div className="section-title" style={{ marginBottom: 0 }}>
@@ -1339,6 +1337,131 @@ export function PairwiseRating({ locale = "zh" }) {
                 })}
               </div>
             </article>
+
+            <article className="pairwise-scorecard">
+              <div className="section-title">
+                <h3>{copy.scoring}</h3>
+                <span>{copy.stats}</span>
+              </div>
+
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsDimensionFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isDimensionFolded ? "+" : "-"}</span>
+                <span>{isDimensionFolded ? copy.expandDimensions : copy.collapseDimensions}</span>
+              </button>
+
+              {isDimensionFolded ? null : (
+                <div className="dimension-grid">
+                  {DIMENSIONS.map((dimension) => (
+                    <div key={dimension.key} className="dimension-card">
+                      <strong>{dimension.label}</strong>
+                      <div className="segment-options">
+                        {CHOICE_OPTIONS.map((option) => (
+                          <label
+                            key={option.value}
+                            className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
+                          >
+                            <input
+                              checked={ratings.pairwise[dimension.key] === option.value}
+                              name={dimension.key}
+                              onChange={() => updatePairwise(dimension.key, option.value)}
+                              type="radio"
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsConfidenceFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isConfidenceFolded ? "+" : "-"}</span>
+                <span>{isConfidenceFolded ? copy.expandConfidence : copy.collapseConfidence}</span>
+              </button>
+
+              {isConfidenceFolded ? null : (
+                <label className="field pairwise-note">
+                  <span>{copy.confidence}</span>
+                  <select
+                    value={ratings.pairwise.confidence}
+                    onChange={(event) => updatePairwise("confidence", event.target.value)}
+                  >
+                    <option value="">--</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+              )}
+
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsNoteFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isNoteFolded ? "+" : "-"}</span>
+                <span>{isNoteFolded ? copy.expandNote : copy.collapseNote}</span>
+              </button>
+
+              {isNoteFolded ? null : (
+                <label className="field pairwise-note">
+                  <span>{copy.note}</span>
+                  <textarea
+                    rows="4"
+                    value={ratings.pairwise.note}
+                    onChange={(event) => updatePairwise("note", event.target.value)}
+                  />
+                </label>
+              )}
+
+              <button
+                type="button"
+                className="scorecard-toggle"
+                onClick={() => setIsSaveFolded((current) => !current)}
+              >
+                <span className="scorecard-toggle-indicator">{isSaveFolded ? "+" : "-"}</span>
+                <span>{isSaveFolded ? copy.expandSave : copy.collapseSave}</span>
+              </button>
+
+              {isSaveFolded ? null : (
+                <div className="save-row">
+                  <button className="primary-btn" type="button" onClick={handleSave}>
+                    {copy.save}
+                  </button>
+                  <span className="save-hint">{saveState || copy.saveHint}</span>
+                </div>
+              )}
+            </article>
+
+            <div className="pairwise-bottom-bar">
+              <div className="pairwise-bottom-inner">
+                <div className="segment-options segment-options-inline">
+                  {copy.winnerOptions.map((option) => (
+                    <label
+                      key={option.value}
+                      className={`segment-option ${ratings.pairwise.winner === option.value ? "active" : ""}`}
+                    >
+                      <input
+                        checked={ratings.pairwise.winner === option.value}
+                        name="winner"
+                        onChange={() => handleWinnerSelect(option.value)}
+                        type="radio"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="empty">{copy.loading}</div>
