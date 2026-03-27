@@ -10,13 +10,16 @@ import {
 const APP_COPY = {
   zh: {
     sections: [
-      { key: "qualitative", label: "新评审", note: "对话 messages 与人工评分", icon: "◔" },
-      { key: "leaderboard", label: "Leaderboard", note: "教学能力与通用基准双轴榜单", icon: "☷" },
-      { key: "pairwise", label: "Search", note: "记录、消息与双候选对比评分", icon: "⌕" },
+      { key: "qualitative", label: "新评审", note: "对话消息与人工评分", icon: "◔" },
+      { key: "leaderboard", label: "榜单", note: "教学能力与通用基准双轴榜单", icon: "☷" },
+      { key: "pairwise", label: "搜索", note: "记录、消息与双候选对比评分", icon: "⌕" },
     ],
-    workspaceLabel: "Older",
+    workspaceLabel: "更早",
     sidebarCopy: "教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。",
     currentView: "当前视图",
+    workspaceLeaderboard: "榜单",
+    workspacePairwise: "搜索",
+    workspaceQualitative: "新评审",
     modelRanking: "模型排行",
     messageReview: "消息评审",
     pairwiseReview: "Pairwise 评审",
@@ -35,6 +38,9 @@ const APP_COPY = {
     workspaceLabel: "Older",
     sidebarCopy: "A workspace for teaching leaderboards and qualitative review. Switch workspaces on the left and inspect content on the right.",
     currentView: "Current View",
+    workspaceLeaderboard: "leaderboard",
+    workspacePairwise: "search",
+    workspaceQualitative: "new-chat",
     modelRanking: "Model Ranking",
     messageReview: "Message Review",
     pairwiseReview: "Pairwise Review",
@@ -320,7 +326,7 @@ function App() {
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState("pairwise");
   const [activeView, setActiveView] = useState("overall");
-  const [locale, setLocale] = useState("zh");
+  const [locale, setLocale] = useState("en");
   const copy = APP_COPY[locale];
   const sections = copy.sections;
 
@@ -370,10 +376,10 @@ function App() {
                 <span className="workspace-item-mark" aria-hidden="true">✕</span>
                 <span className="workspace-item-title">
                   {activeSection === "leaderboard"
-                    ? "leaderboard"
+                    ? copy.workspaceLeaderboard
                     : activeSection === "pairwise"
-                      ? "search"
-                      : "new-chat"}
+                      ? copy.workspacePairwise
+                      : copy.workspaceQualitative}
                 </span>
               </button>
               <button className="workspace-item" type="button">
