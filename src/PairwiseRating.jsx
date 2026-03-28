@@ -132,7 +132,9 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-bottom-inner {
-    width: min(720px, calc(100% - 24px));
+    display: grid;
+    gap: 12px;
+    width: min(920px, calc(100% - 24px));
     padding: 10px;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -147,6 +149,13 @@ export const PAIRWISE_CSS = `
     border-radius: 20px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.03);
+  }
+
+  .pairwise-bottom-inner .pairwise-scorecard {
+    padding: 4px 4px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
   .pairwise-candidates {
@@ -1283,112 +1292,112 @@ ${latestText}`;
               </div>
             </div>
 
-            <article className="pairwise-scorecard">
-              <div className="section-title">
-                <h3>{copy.scoring}</h3>
-                <span>{copy.stats}</span>
-              </div>
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsDimensionFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isDimensionFolded ? "+" : "-"}</span>
-                <span>{isDimensionFolded ? copy.expandDimensions : copy.collapseDimensions}</span>
-              </button>
-
-              {isDimensionFolded ? null : (
-                <div className="dimension-grid">
-                  {DIMENSIONS.map((dimension) => (
-                    <div key={dimension.key} className="dimension-card">
-                      <strong>{dimension.label}</strong>
-                      <div className="segment-options">
-                        {CHOICE_OPTIONS.map((option) => (
-                          <label
-                            key={option.value}
-                            className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
-                          >
-                            <input
-                              checked={ratings.pairwise[dimension.key] === option.value}
-                              name={dimension.key}
-                              onChange={() => updatePairwise(dimension.key, option.value)}
-                              type="radio"
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsConfidenceFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isConfidenceFolded ? "+" : "-"}</span>
-                <span>{isConfidenceFolded ? copy.expandConfidence : copy.collapseConfidence}</span>
-              </button>
-
-              {isConfidenceFolded ? null : (
-                <label className="field pairwise-note">
-                  <span>{copy.confidence}</span>
-                  <select
-                    value={ratings.pairwise.confidence}
-                    onChange={(event) => updatePairwise("confidence", event.target.value)}
-                  >
-                    <option value="">--</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </label>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsNoteFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isNoteFolded ? "+" : "-"}</span>
-                <span>{isNoteFolded ? copy.expandNote : copy.collapseNote}</span>
-              </button>
-
-              {isNoteFolded ? null : (
-                <label className="field pairwise-note">
-                  <span>{copy.note}</span>
-                  <textarea
-                    rows="4"
-                    value={ratings.pairwise.note}
-                    onChange={(event) => updatePairwise("note", event.target.value)}
-                  />
-                </label>
-              )}
-
-              <button
-                type="button"
-                className="scorecard-toggle"
-                onClick={() => setIsSaveFolded((current) => !current)}
-              >
-                <span className="scorecard-toggle-indicator">{isSaveFolded ? "+" : "-"}</span>
-                <span>{isSaveFolded ? copy.expandSave : copy.collapseSave}</span>
-              </button>
-
-              {isSaveFolded ? null : (
-                <div className="save-row">
-                  <button className="primary-btn" type="button" onClick={handleSave}>
-                    {copy.save}
-                  </button>
-                  <span className="save-hint">{saveState || copy.saveHint}</span>
-                </div>
-              )}
-            </article>
-
             <div className="pairwise-bottom-bar">
               <div className="pairwise-bottom-inner">
+                <article className="pairwise-scorecard">
+                  <div className="section-title">
+                    <h3>{copy.scoring}</h3>
+                    <span>{copy.stats}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="scorecard-toggle"
+                    onClick={() => setIsDimensionFolded((current) => !current)}
+                  >
+                    <span className="scorecard-toggle-indicator">{isDimensionFolded ? "+" : "-"}</span>
+                    <span>{isDimensionFolded ? copy.expandDimensions : copy.collapseDimensions}</span>
+                  </button>
+
+                  {isDimensionFolded ? null : (
+                    <div className="dimension-grid">
+                      {DIMENSIONS.map((dimension) => (
+                        <div key={dimension.key} className="dimension-card">
+                          <strong>{dimension.label}</strong>
+                          <div className="segment-options">
+                            {CHOICE_OPTIONS.map((option) => (
+                              <label
+                                key={option.value}
+                                className={`segment-option ${ratings.pairwise[dimension.key] === option.value ? "active" : ""}`}
+                              >
+                                <input
+                                  checked={ratings.pairwise[dimension.key] === option.value}
+                                  name={dimension.key}
+                                  onChange={() => updatePairwise(dimension.key, option.value)}
+                                  type="radio"
+                                />
+                                <span>{option.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="scorecard-toggle"
+                    onClick={() => setIsConfidenceFolded((current) => !current)}
+                  >
+                    <span className="scorecard-toggle-indicator">{isConfidenceFolded ? "+" : "-"}</span>
+                    <span>{isConfidenceFolded ? copy.expandConfidence : copy.collapseConfidence}</span>
+                  </button>
+
+                  {isConfidenceFolded ? null : (
+                    <label className="field pairwise-note">
+                      <span>{copy.confidence}</span>
+                      <select
+                        value={ratings.pairwise.confidence}
+                        onChange={(event) => updatePairwise("confidence", event.target.value)}
+                      >
+                        <option value="">--</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    </label>
+                  )}
+
+                  <button
+                    type="button"
+                    className="scorecard-toggle"
+                    onClick={() => setIsNoteFolded((current) => !current)}
+                  >
+                    <span className="scorecard-toggle-indicator">{isNoteFolded ? "+" : "-"}</span>
+                    <span>{isNoteFolded ? copy.expandNote : copy.collapseNote}</span>
+                  </button>
+
+                  {isNoteFolded ? null : (
+                    <label className="field pairwise-note">
+                      <span>{copy.note}</span>
+                      <textarea
+                        rows="4"
+                        value={ratings.pairwise.note}
+                        onChange={(event) => updatePairwise("note", event.target.value)}
+                      />
+                    </label>
+                  )}
+
+                  <button
+                    type="button"
+                    className="scorecard-toggle"
+                    onClick={() => setIsSaveFolded((current) => !current)}
+                  >
+                    <span className="scorecard-toggle-indicator">{isSaveFolded ? "+" : "-"}</span>
+                    <span>{isSaveFolded ? copy.expandSave : copy.collapseSave}</span>
+                  </button>
+
+                  {isSaveFolded ? null : (
+                    <div className="save-row">
+                      <button className="primary-btn" type="button" onClick={handleSave}>
+                        {copy.save}
+                      </button>
+                      <span className="save-hint">{saveState || copy.saveHint}</span>
+                    </div>
+                  )}
+                </article>
+
                 <div className="segment-options segment-options-inline">
                   {copy.winnerOptions.map((option) => (
                     <label
