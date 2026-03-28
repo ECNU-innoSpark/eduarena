@@ -620,6 +620,15 @@ export const BENCHMARK_METRICS = [
   { key: "lmArenaInputPrice", label: { zh: "LM Arena Input Price", en: "LM Arena Input Price" }, max: 20, higherIsBetter: false },
   { key: "lmArenaOutputPrice", label: { zh: "LM Arena Output Price", en: "LM Arena Output Price" }, max: 25, higherIsBetter: false },
   { key: "lmArenaContextWindow", label: { zh: "LM Arena Context Window", en: "LM Arena Context Window" }, max: 2000000 },
+  { key: "pairwiseBattlesSeen", label: { zh: "Pairwise Battles Seen", en: "Pairwise Battles Seen" }, max: 100 },
+  { key: "pairwiseBattlesFinished", label: { zh: "Pairwise Battles Finished", en: "Pairwise Battles Finished" }, max: 100 },
+  { key: "pairwiseBattlesWon", label: { zh: "Pairwise Battles Won", en: "Pairwise Battles Won" }, max: 100 },
+  { key: "pairwiseBattlesLost", label: { zh: "Pairwise Battles Lost", en: "Pairwise Battles Lost" }, max: 100, higherIsBetter: false },
+  { key: "pairwiseTies", label: { zh: "Pairwise Ties", en: "Pairwise Ties" }, max: 100 },
+  { key: "pairwiseBothBad", label: { zh: "Pairwise Both Bad", en: "Pairwise Both Bad" }, max: 100, higherIsBetter: false },
+  { key: "pairwiseWinRate", label: { zh: "Pairwise Win Rate", en: "Pairwise Win Rate" }, max: 1 },
+  { key: "pairwiseDecisiveWinRate", label: { zh: "Pairwise Decisive Win Rate", en: "Pairwise Decisive Win Rate" }, max: 1 },
+  { key: "pairwiseNonLossRate", label: { zh: "Pairwise Non-loss Rate", en: "Pairwise Non-loss Rate" }, max: 1 },
 ];
 
 // Python equivalent:
@@ -748,6 +757,15 @@ const TAB_ICONS = {
   lmArenaInputPrice: "$",
   lmArenaOutputPrice: "↗",
   lmArenaContextWindow: "⌂",
+  pairwiseBattlesSeen: "◍",
+  pairwiseBattlesFinished: "◉",
+  pairwiseBattlesWon: "✓",
+  pairwiseBattlesLost: "✕",
+  pairwiseTies: "≈",
+  pairwiseBothBad: "⊘",
+  pairwiseWinRate: "◔",
+  pairwiseDecisiveWinRate: "◆",
+  pairwiseNonLossRate: "▣",
 };
 
 function localizedLabel(label, locale) {
@@ -797,6 +815,15 @@ export function useLeaderboardData({ activeView, query }) {
         lmArenaInputPrice: parseCurrencyNumber(cols[53]),
         lmArenaOutputPrice: parseCurrencyNumber(cols[54]),
         lmArenaContextWindow: parseScaledNumber(cols[55]),
+        pairwiseBattlesSeen: parseNumber(cols[63]),
+        pairwiseBattlesFinished: parseNumber(cols[64]),
+        pairwiseBattlesWon: parseNumber(cols[65]),
+        pairwiseBattlesLost: parseNumber(cols[66]),
+        pairwiseTies: parseNumber(cols[67]),
+        pairwiseBothBad: parseNumber(cols[68]),
+        pairwiseWinRate: parseNumber(cols[69]),
+        pairwiseDecisiveWinRate: parseNumber(cols[70]),
+        pairwiseNonLossRate: parseNumber(cols[71]),
       }));
 
       setModels(items);

@@ -1,0 +1,4 @@
+﻿pairwise_join_key,pairwise_model,pairwise_raw_model,pairwise_battles_seen,pairwise_battles_finished,pairwise_battles_won,pairwise_battles_lost,pairwise_ties,pairwise_both_bad,pairwise_win_rate,pairwise_decisive_win_rate,pairwise_non_loss_rate
+qwen3.5-397b,qwen3.5-397b,qz__qwen3.5-397b,8,8,3,2,3,0,0.5625,0.6000,0.7500
+glm-5,glm-5,qz__glm-5,18,18,8,8,0,2,0.4444,0.5000,0.4444
+Kimi-K25,Kimi-K25,qz__Kimi-K25,24,24,9,10,3,2,0.4375,0.4737,0.5000
