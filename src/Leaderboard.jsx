@@ -68,12 +68,9 @@ export const LEADERBOARD_CSS = `
   }
 
   .controls {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 12px;
-    align-items: center;
-    margin-bottom: 18px;
-    padding: 14px;
+    margin-bottom: 20px;
   }
 
   .tabs {
@@ -99,9 +96,7 @@ export const LEADERBOARD_CSS = `
   }
 
   .search {
-    margin-left: auto;
-    min-width: min(100%, 240px);
-    flex: 1 1 240px;
+    min-width: 0;
   }
 
   .search input {
@@ -123,6 +118,9 @@ export const LEADERBOARD_CSS = `
   .chart-panel,
   .detail-panel {
     padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
   }
 
   .bars {
@@ -532,33 +530,7 @@ function LeaderboardView({
 
   return (
     <>
-      <section className="hero">
-        <div className="panel hero-copy">
-          <span className="eyebrow">{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.hero}</p>
-        </div>
-        <div className="panel stats">
-          <div className="stat-card">
-            <span>{copy.modelCount}</span>
-            <strong>{models.length || "--"}</strong>
-          </div>
-          <div className="stat-card">
-            <span>{copy.topModel}</span>
-            <strong>{leader ? leader.name.split("-")[0] : "--"}</strong>
-          </div>
-          <div className="stat-card">
-            <span>{copy.domestic}</span>
-            <strong>{domesticCount}</strong>
-          </div>
-          <div className="stat-card">
-            <span>{copy.foreign}</span>
-            <strong>{foreignCount}</strong>
-          </div>
-        </div>
-      </section>
-
-      <section className="panel controls">
+      <section className="controls">
         <div className="tabs">
           {VIEW_OPTIONS.map((option) => (
             <button
@@ -581,7 +553,7 @@ function LeaderboardView({
       </section>
 
       <section className="layout">
-        <article className="panel chart-panel">
+        <article className="chart-panel">
           <div className="section-title">
             <h2>{labelFor(activeView, locale)} {copy.rankingSuffix}</h2>
             <span>{copy.rankingNote}</span>
@@ -624,7 +596,7 @@ function LeaderboardView({
           )}
         </article>
 
-        <aside className="panel detail-panel">
+        <aside className="detail-panel">
           {selectedModel ? (
             <>
               <div className="detail-header">
