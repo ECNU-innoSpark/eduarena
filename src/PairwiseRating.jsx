@@ -885,6 +885,19 @@ function pickDefaultCandidateBVariant(items, candidateAFile) {
   return uniqueVariants.find((variant) => variant !== candidateAVariant) ?? uniqueVariants[0] ?? candidateAVariant;
 }
 
+function pickRandomCandidateAFile(items, currentFile = "") {
+  const availableFiles = items
+    .map((item) => item?.fileName)
+    .filter(Boolean);
+
+  if (!availableFiles.length) return "";
+
+  const pool = availableFiles.filter((fileName) => fileName !== currentFile);
+  const candidates = pool.length ? pool : availableFiles;
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  return candidates[randomIndex] ?? "";
+}
+
 function renderConversationMessageCard({
   message,
   messageIndex,
@@ -939,8 +952,9 @@ export function PairwiseRating({ locale = "zh" }) {
 
       const items = await response.json();
       setMessageOptions(items);
-      if (items[0]?.fileName) {
-        setSelectedCandidateAFile(items[0].fileName);
+      const randomCandidateAFile = pickRandomCandidateAFile(items);
+      if (randomCandidateAFile) {
+        setSelectedCandidateAFile(randomCandidateAFile);
         setSelectedCandidateBVariant("");
       }
     }
@@ -1093,12 +1107,9 @@ ${latestText}`;
   function advanceToNextCandidates() {
     if (!messageOptions.length) return;
 
-    const currentAIndex = messageOptions.findIndex((item) => item.fileName === selectedCandidateAFile);
-    const nextCandidateA = messageOptions[currentAIndex >= 0 ? currentAIndex + 1 : 0];
-
-    if (!nextCandidateA?.fileName) return;
-
-    setSelectedCandidateAFile(nextCandidateA.fileName);
+    const nextCandidateAFile = pickRandomCandidateAFile(messageOptions, selectedCandidateAFile);
+    if (!nextCandidateAFile) return;
+    setSelectedCandidateAFile(nextCandidateAFile);
   }
 
   async function handleSave(ratingsOverride = ratings) {
