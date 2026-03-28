@@ -1167,7 +1167,7 @@ ${latestText}`;
 
   return (
     <>
-      <section className="panel pairwise">
+      <section className="pairwise">
         <div className="pairwise-debug-floating" title={ratingFolderDebugTitle}>{ratingFolderDebugMessage}</div>
         {activeRecord ? (
           <div className="pairwise-layout">
