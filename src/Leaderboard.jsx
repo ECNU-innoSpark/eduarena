@@ -766,7 +766,7 @@ export function useLeaderboardData({ activeView, query }) {
       const items = rows.slice(1).map((cols) => ({
         name: cols[0]?.trim() ?? "",
         version: cols[1]?.trim() ?? "",
-        note: cols[2]?.trim() ?? "",
+        note: cols[45]?.trim() || cols[2]?.trim() || "",
         knowledge: parseNumber(cols[3]),
         guided: parseNumber(cols[4]),
         crossDiscipline: parseNumber(cols[5]),
