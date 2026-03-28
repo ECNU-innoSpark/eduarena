@@ -142,7 +142,6 @@ export const PAIRWISE_CSS = `
     pointer-events: auto;
   }
 
-  .pairwise-candidates,
   .pairwise-scorecard {
     padding: 16px;
     border-radius: 20px;
@@ -150,34 +149,34 @@ export const PAIRWISE_CSS = `
     background: rgba(255, 255, 255, 0.03);
   }
 
-  .pairwise-scorecard {
-    padding: 16px;
+  .pairwise-candidates {
+    display: grid;
+    gap: 12px;
   }
 
   .pairwise-candidate-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 18px;
   }
 
   .pairwise-candidate-card {
-    padding: 14px;
+    display: grid;
+    align-content: start;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.02);
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
   }
 
   .pairwise-candidate-card[data-slot="a"] {
-    border-color: rgba(63, 155, 161, 0.28);
-    background: rgba(63, 155, 161, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .pairwise-candidate-card[data-slot="b"] {
-    border-color: rgba(208, 119, 65, 0.28);
-    background: rgba(208, 119, 65, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .pairwise-candidate-top {
@@ -185,34 +184,34 @@ export const PAIRWISE_CSS = `
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    margin-bottom: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .candidate-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 999px;
+    min-width: 20px;
+    font-size: 12px;
     font-weight: 700;
-    background: rgba(255, 255, 255, 0.12);
   }
 
   .candidate-name {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--muted);
   }
 
   .candidate-body {
-    line-height: 1.7;
-    word-break: break-word;
+    padding: 0 16px 16px;
     min-width: 0;
     max-width: 100%;
   }
 
   .candidate-picker {
-    margin-bottom: 12px;
+    margin: 0;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     min-width: 0;
   }
 
@@ -275,6 +274,20 @@ export const PAIRWISE_CSS = `
     font-size: 13px;
   }
 
+  .pairwise-candidate-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pairwise-record-id {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: "SFMono-Regular", "SF Mono", "Consolas", monospace;
+  }
+
   .pairwise-candidates .field,
   .pairwise-candidates .field select,
   .pairwise-candidates .conversation-list,
@@ -289,6 +302,10 @@ export const PAIRWISE_CSS = `
 
   .pairwise-candidates .field select {
     width: 100%;
+  }
+
+  .pairwise-candidates .conversation-list {
+    gap: 0;
   }
 
   .pairwise-candidates .message-body,
@@ -313,16 +330,36 @@ export const PAIRWISE_CSS = `
     margin-bottom: 0;
   }
 
+  .pairwise-candidates .message-card {
+    padding: 14px 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .pairwise-candidates .conversation-list > .message-card:first-child {
+    border-top: 0;
+  }
+
+  .pairwise-candidates .message-card.user,
+  .pairwise-candidates .message-card.assistant {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: transparent;
+  }
+
   .message-fold-toggle {
     width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px dashed var(--line);
-    background: rgba(255, 255, 255, 0.02);
+    padding: 14px 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    background: transparent;
     color: var(--muted);
     cursor: pointer;
     font: inherit;
@@ -330,7 +367,6 @@ export const PAIRWISE_CSS = `
 
   .message-fold-toggle:hover {
     color: var(--text);
-    border-color: rgba(255, 255, 255, 0.2);
   }
 
   .conversation-filters {
@@ -1126,12 +1162,9 @@ ${latestText}`;
         <div className="pairwise-debug-floating" title={ratingFolderDebugTitle}>{ratingFolderDebugMessage}</div>
         {activeRecord ? (
           <div className="pairwise-layout">
-            <article className="pairwise-candidates">
-              <div className="conversation-toolbar">
-                <div className="section-title" style={{ marginBottom: 0 }}>
-                  <h3>{copy.candidates}</h3>
-                  <span>{activeRecord.record_id}</span>
-                </div>
+            <div className="pairwise-candidates">
+              <div className="pairwise-candidate-controls">
+                <span className="pairwise-record-id">{activeRecord.record_id}</span>
                 <div className="conversation-filters">
                   <label className="conversation-filter">
                     <input
@@ -1248,7 +1281,7 @@ ${latestText}`;
                   );
                 })}
               </div>
-            </article>
+            </div>
 
             <article className="pairwise-scorecard">
               <div className="section-title">
