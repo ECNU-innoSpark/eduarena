@@ -17,12 +17,12 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-debug-floating {
-    position: absolute;
-    top: 18px;
-    right: 18px;
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
     z-index: 18;
     margin: 0;
-    width: min(100%, 420px);
+    width: min(calc(100vw - 32px), 360px);
     padding: 8px 10px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.08);
