@@ -105,6 +105,16 @@ def get_message_question_folder(file_name):
     return "/".join(parts[:-2]) if len(parts) > 2 else ""
 
 
+def get_message_variant(file_name):
+    parts = [part for part in str(file_name or "").split("/") if part]
+    return "/".join(parts[-2:]) if len(parts) > 1 else str(file_name or "")
+
+
+def get_message_variant_label(file_name):
+    parts = [part for part in str(file_name or "").split("/") if part]
+    return parts[-2] if len(parts) > 1 else str(file_name or "")
+
+
 def ensure_dir(path):
     path.mkdir(parents=True, exist_ok=True)
 
@@ -267,19 +277,22 @@ class PairwiseRatingWorkflow:
                 snapshots.append({"name": file_path.name, "filePath": str(file_path), "data": data})
         return snapshots
 
-    def read_message_options(self, multi_model_only=False):
+    def read_message_options(self, multi_model_only=False, target_folder=None):
         items = []
+        normalized_target_folder = str(target_folder or "").replace("\\", "/").strip("/")
         if self.paths.messages_v4_dir.exists():
             file_paths = sorted(
                 (path for path in list_files_recursive(self.paths.messages_v4_dir) if path.name == "run.json"),
                 key=lambda path: str(path),
             )
             for file_path in file_paths:
+                conversation_path = file_path.parent / "conversation-messages.json"
+                relative_path = conversation_path.relative_to(self.paths.messages_v4_dir).as_posix()
+                if normalized_target_folder and get_message_question_folder(relative_path) != normalized_target_folder:
+                    continue
                 data = read_json(file_path)
                 if not isinstance(data, dict):
                     continue
-                conversation_path = file_path.parent / "conversation-messages.json"
-                relative_path = conversation_path.relative_to(self.paths.messages_v4_dir).as_posix()
                 items.append(build_message_option(data, relative_path))
 
         if multi_model_only:
@@ -290,6 +303,30 @@ class PairwiseRatingWorkflow:
             items = [item for item in items if folder_counts.get(get_message_question_folder(item.get("fileName")), 0) > 1]
 
         return sorted(items, key=lambda item: (str(item.get("scenario", "")), str(item.get("label", ""))))
+
+    def read_sibling_message_options(self, file_name):
+        target_folder = get_message_question_folder(file_name)
+        if not target_folder:
+            return []
+
+        sibling_items = self.read_message_options(multi_model_only=True, target_folder=target_folder)
+        current_variant_file = get_message_variant(file_name)
+
+        variant_map = {}
+        for item in sibling_items:
+            variant_file = get_message_variant(item.get("fileName"))
+            if variant_file == current_variant_file:
+                continue
+            if variant_file in variant_map:
+                continue
+            variant_map[variant_file] = {
+                "fileName": variant_file,
+                "label": get_message_variant_label(item.get("fileName")),
+                "scenario": item.get("scenario"),
+                "recordId": item.get("recordId"),
+            }
+
+        return sorted(variant_map.values(), key=lambda item: str(item.get("label", "")).casefold())
 
     def read_aggregated_ratings(self):
         legacy_data = self.read_ratings_file()

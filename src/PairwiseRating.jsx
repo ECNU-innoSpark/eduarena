@@ -836,11 +836,6 @@ function getCandidateVariant(fileName) {
   return parts.length > 1 ? parts.slice(-2).join("/") : String(fileName || "");
 }
 
-function getCandidateVariantLabel(fileName) {
-  const parts = splitMessagePath(fileName);
-  return parts.at(-2) || String(fileName || "");
-}
-
 function buildCandidateFileFromFolder(folderName, variantFile) {
   const folder = String(folderName || "").replace(/^\/+|\/+$/g, "");
   const variant = String(variantFile || "").replace(/^\/+|\/+$/g, "");
@@ -850,11 +845,8 @@ function buildCandidateFileFromFolder(folderName, variantFile) {
 }
 
 function pickDefaultCandidateBVariant(items, candidateAFile) {
-  const candidateAFolder = getCandidateQuestionFolder(candidateAFile);
   const candidateAVariant = getCandidateVariant(candidateAFile);
-  const siblingVariants = items
-    .filter((item) => getCandidateQuestionFolder(item.fileName) === candidateAFolder)
-    .map((item) => getCandidateVariant(item.fileName));
+  const siblingVariants = items.map((item) => item.fileName);
   const uniqueVariants = [...new Set(siblingVariants)];
   return uniqueVariants.find((variant) => variant !== candidateAVariant) ?? uniqueVariants[0] ?? candidateAVariant;
 }
@@ -888,6 +880,7 @@ function renderConversationMessageCard({
 export function PairwiseRating({ locale = "zh" }) {
   const copy = PAIRWISE_COPY[locale] ?? PAIRWISE_COPY.zh;
   const [messageOptions, setMessageOptions] = useState([]);
+  const [candidateBOptions, setCandidateBOptions] = useState([]);
   const [selectedCandidateAFile, setSelectedCandidateAFile] = useState("");
   const [selectedCandidateBVariant, setSelectedCandidateBVariant] = useState("");
   const [candidateARawRecord, setCandidateARawRecord] = useState(null);
@@ -943,7 +936,7 @@ export function PairwiseRating({ locale = "zh" }) {
       setMessageOptions(items);
       if (items[0]?.fileName) {
         setSelectedCandidateAFile(items[0].fileName);
-        setSelectedCandidateBVariant(pickDefaultCandidateBVariant(items, items[0].fileName));
+        setSelectedCandidateBVariant("");
       }
     }
 
@@ -988,6 +981,34 @@ export function PairwiseRating({ locale = "zh" }) {
   }, [selectedCandidateAFile]);
 
   useEffect(() => {
+    if (!selectedCandidateAFile) return;
+
+    async function loadCandidateBOptions() {
+      const response = await fetch(
+        appUrl(`/api/qualitative-message-siblings?file=${encodeURIComponent(selectedCandidateAFile)}`),
+      );
+      if (!response.ok) throw new Error(`candidate B options failed:${response.status}`);
+
+      const items = await response.json();
+      setCandidateBOptions(items);
+    }
+
+    loadCandidateBOptions().catch(() => {
+      setCandidateBOptions([]);
+      setSelectedCandidateBVariant("");
+    });
+  }, [selectedCandidateAFile]);
+
+  useEffect(() => {
+    if (!candidateBOptions.length) {
+      if (selectedCandidateBVariant) setSelectedCandidateBVariant("");
+      return;
+    }
+    if (candidateBOptions.some((item) => item.fileName === selectedCandidateBVariant)) return;
+    setSelectedCandidateBVariant(pickDefaultCandidateBVariant(candidateBOptions, selectedCandidateAFile));
+  }, [candidateBOptions, selectedCandidateAFile, selectedCandidateBVariant]);
+
+  useEffect(() => {
     if (!selectedCandidateAFile || !selectedCandidateBVariant) return;
 
     async function loadCandidateRecord() {
@@ -1011,39 +1032,7 @@ export function PairwiseRating({ locale = "zh" }) {
     });
   }, [selectedCandidateAFile, selectedCandidateBVariant]);
 
-  useEffect(() => {
-    if (!selectedCandidateAFile || !messageOptions.length) return;
-
-    const candidateAFolder = getCandidateQuestionFolder(selectedCandidateAFile);
-    const availableVariants = [...new Set(
-      messageOptions
-        .filter((item) => getCandidateQuestionFolder(item.fileName) === candidateAFolder)
-        .map((item) => getCandidateVariant(item.fileName)),
-    )];
-    if (!availableVariants.length) return;
-
-    if (!availableVariants.includes(selectedCandidateBVariant)) {
-      setSelectedCandidateBVariant(pickDefaultCandidateBVariant(messageOptions, selectedCandidateAFile));
-    }
-  }, [messageOptions, selectedCandidateAFile, selectedCandidateBVariant]);
-
   const activeRecord = candidateARecord ?? candidateBRecord ?? null;
-
-  const candidateBOptions = useMemo(() => {
-    const variantMap = new Map();
-    messageOptions.forEach((item) => {
-      const variantFile = getCandidateVariant(item.fileName);
-      if (variantMap.has(variantFile)) return;
-      variantMap.set(variantFile, {
-        fileName: variantFile,
-        label: getCandidateVariantLabel(item.fileName),
-        scenario: item.scenario,
-        recordId: item.recordId,
-      });
-    });
-
-    return Array.from(variantMap.values()).sort((left, right) => left.label.localeCompare(right.label));
-  }, [messageOptions]);
 
   useEffect(() => {
     setRatings(normalizePairwiseRatings(activeRecord, savedRatingsFile));
@@ -1107,7 +1096,6 @@ export function PairwiseRating({ locale = "zh" }) {
     if (!nextCandidateA?.fileName) return;
 
     setSelectedCandidateAFile(nextCandidateA.fileName);
-    setSelectedCandidateBVariant(pickDefaultCandidateBVariant(messageOptions, nextCandidateA.fileName));
   }
 
   async function handleSave(ratingsOverride = ratings) {

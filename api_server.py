@@ -72,6 +72,9 @@ class ApiHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/qualitative-messages":
             self.handle_qualitative_messages(parsed)
             return
+        if parsed.path == "/api/qualitative-message-siblings":
+            self.handle_qualitative_message_siblings(parsed)
+            return
         if parsed.path == "/api/qualitative-ratings-folder":
             self.handle_ratings_folder(parsed)
             return
@@ -113,6 +116,14 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
 
         self._send_json(workflow.read_message_options(multi_model_only=multi_model_only))
+
+    def handle_qualitative_message_siblings(self, parsed):
+        query = parse_qs(parsed.query)
+        file_name = query.get("file", [None])[0]
+        if not file_name:
+            self._send_json({"error": "Missing file query parameter"}, status=400)
+            return
+        self._send_json(workflow.read_sibling_message_options(file_name))
 
     def handle_ratings_folder(self, parsed):
         query = parse_qs(parsed.query)
