@@ -708,16 +708,7 @@ export function Leaderboard({
   } = useLeaderboardData({ activeView, query });
 
   return (
-    <>
-      <div className="content-topbar">
-        <div className="topbar-title">
-          {locale === "en" ? "Leaderboard Workspace" : "榜单工作台"}
-          <strong>{locale === "en" ? "Teaching Ability and Benchmark Leaderboard" : "教学能力与通用基准榜单"}</strong>
-        </div>
-        <div className="topbar-meta">{locale === "en" ? `${models.length || 0} models loaded` : `已加载 ${models.length || 0} 个模型`}</div>
-      </div>
-
-      <LeaderboardView
+    <LeaderboardView
       activeView={activeView}
       domesticCount={domesticCount}
       foreignCount={foreignCount}
@@ -730,7 +721,6 @@ export function Leaderboard({
       setActiveView={setActiveView}
       setQuery={setQuery}
       setSelectedModel={setSelectedModel}
-      />
-    </>
+    />
   );
 }

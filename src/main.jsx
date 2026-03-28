@@ -31,8 +31,8 @@ const APP_COPY = {
   },
   en: {
     sections: [
-      { key: "pairwise", label: "Arena", note: "Record, messages, and pairwise scoring", icon: "⌕" },
       { key: "leaderboard", label: "Leaderboard", note: "Teaching ability and benchmark ranking", icon: "☷" },
+      { key: "pairwise", label: "Arena", note: "Record, messages, and pairwise scoring", icon: "⌕" },
       // { key: "qualitative", label: "New Chat", note: "Conversation messages and human ratings", icon: "◔" },
     ],
     workspaceLabel: "Older",
