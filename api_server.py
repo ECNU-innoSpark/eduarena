@@ -91,7 +91,7 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        if parsed.path != "/api/qualitative-ratings":
+        if parsed.path not in {"/api/qualitative-ratings", "/api/qualitative-ratings-save"}:
             self._send_json({"error": "Not Found"}, status=404)
             return
 

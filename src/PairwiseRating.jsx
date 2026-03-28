@@ -11,8 +11,28 @@ export const PAIRWISE_CSS = `
   ${ANNOTATION_CSS}
 
   .pairwise {
+    position: relative;
     padding: 18px;
     padding-bottom: 112px;
+  }
+
+  .pairwise-debug-floating {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 18;
+    margin: 0;
+    width: min(100%, 420px);
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(16, 20, 23, 0.62);
+    backdrop-filter: blur(8px);
+    color: rgba(233, 237, 240, 0.62);
+    font: 10px/1.35 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    pointer-events: none;
   }
 
   .pairwise-hero {
@@ -478,8 +498,6 @@ export const PAIRWISE_CSS = `
   }
 `;
 
-const LOCAL_RATINGS_KEY = "hi-react-cc.qualitative-ratings";
-
 const DIMENSIONS = [
   { key: "pedagogy", label: "专业性" },
   { key: "accuracy", label: "个性化" },
@@ -592,22 +610,6 @@ const PAIRWISE_COPY = {
   },
 };
 
-function readLocalRatings() {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(LOCAL_RATINGS_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalRatings(data) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(LOCAL_RATINGS_KEY, JSON.stringify(data));
-}
-
 function createEmptyPairwiseRatings() {
   return {
     pairwise: {
@@ -618,19 +620,6 @@ function createEmptyPairwiseRatings() {
       accuracy: "",
       clarity: "",
       completeness: "",
-    },
-  };
-}
-
-function normalizePairwiseRatings(record, savedData) {
-  const empty = createEmptyPairwiseRatings();
-  const savedRecord = savedData?.records?.[record?.record_id];
-  if (!savedRecord?.pairwise) return empty;
-
-  return {
-    pairwise: {
-      ...empty.pairwise,
-      ...savedRecord.pairwise,
     },
   };
 }
@@ -887,7 +876,6 @@ export function PairwiseRating({ locale = "zh" }) {
   const [candidateBRawRecord, setCandidateBRawRecord] = useState(null);
   const [candidateARecord, setCandidateARecord] = useState(null);
   const [candidateBRecord, setCandidateBRecord] = useState(null);
-  const [savedRatingsFile, setSavedRatingsFile] = useState(null);
   const [ratingFolderSummary, setRatingFolderSummary] = useState(null);
   const [ratings, setRatings] = useState(createEmptyPairwiseRatings());
   const [saveState, setSaveState] = useState("");
@@ -898,34 +886,6 @@ export function PairwiseRating({ locale = "zh" }) {
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
   const [isConfidenceFolded, setIsConfidenceFolded] = useState(true);
   const [isNoteFolded, setIsNoteFolded] = useState(true);
-
-  useEffect(() => {
-    async function loadRatings() {
-      let scoreFile = readLocalRatings() ?? { version: 1, records: {} };
-
-      try {
-        const response = await fetch(appUrl("/api/qualitative-ratings"));
-        if (response.ok) {
-          scoreFile = await response.json();
-          writeLocalRatings(scoreFile);
-        } else {
-          const fallbackResponse = await fetch(appUrl("/data/qualitative/message_ratings.json"));
-          if (fallbackResponse.ok) {
-            scoreFile = await fallbackResponse.json();
-            writeLocalRatings(scoreFile);
-          }
-        }
-      } catch {
-        // Keep local cache when server file is unavailable.
-      }
-
-      setSavedRatingsFile(scoreFile);
-    }
-
-    loadRatings().catch(() => {
-      setSaveState("Pairwise 评分文件加载失败。");
-    });
-  }, []);
 
   useEffect(() => {
     async function loadMessageOptions() {
@@ -1035,8 +995,8 @@ export function PairwiseRating({ locale = "zh" }) {
   const activeRecord = candidateARecord ?? candidateBRecord ?? null;
 
   useEffect(() => {
-    setRatings(normalizePairwiseRatings(activeRecord, savedRatingsFile));
-  }, [activeRecord, savedRatingsFile]);
+    setRatings(createEmptyPairwiseRatings());
+  }, [activeRecord?.record_id]);
 
   const pairwiseCandidates = useMemo(() => {
     const candidateA = buildCandidateFromRecord(candidateARawRecord, candidateARecord, copy.candidateA);
@@ -1048,25 +1008,23 @@ export function PairwiseRating({ locale = "zh" }) {
     };
   }, [candidateARecord, candidateARawRecord, candidateBRecord, candidateBRawRecord, copy.candidateA, copy.candidateB]);
 
-  const pairwiseSummary = useMemo(() => {
-    const mergedRecords = {
-      ...(savedRatingsFile?.records ?? {}),
-    };
+  const ratingFolderDebugMessage = useMemo(() => {
+    if (!ratingFolderSummary) return "pairwise folder summary: unavailable";
+    const dirName = String(ratingFolderSummary.dir || "").split("/").filter(Boolean).at(-1) || "unknown";
+    const latestFile = ratingFolderSummary.files?.[ratingFolderSummary.files.length - 1];
+    const latestText = latestFile
+      ? `latest: ${latestFile.name}\nlatestRecordCount: ${latestFile.recordCount}`
+      : "latest: none";
+    return `debug pairwise folder
+dir: ${dirName}
+fileCount: ${ratingFolderSummary.fileCount ?? 0}
+${latestText}`;
+  }, [ratingFolderSummary]);
 
-    if (activeRecord?.record_id) {
-      mergedRecords[activeRecord.record_id] = {
-        ...(mergedRecords[activeRecord.record_id] ?? {}),
-        record_id: activeRecord.record_id,
-        pairwise: ratings.pairwise,
-      };
-    }
-
-    const records = Object.values(mergedRecords);
-    const pairwiseRecords = records.filter((item) => item?.pairwise?.winner);
-    return {
-      count: ratingFolderSummary?.fileCount ?? pairwiseRecords.length,
-    };
-  }, [activeRecord?.record_id, ratingFolderSummary?.fileCount, ratings.pairwise, savedRatingsFile]);
+  const ratingFolderDebugTitle = useMemo(() => {
+    if (!ratingFolderSummary) return "pairwise folder summary unavailable";
+    return JSON.stringify(ratingFolderSummary, null, 2);
+  }, [ratingFolderSummary]);
 
   function updatePairwise(field, value) {
     const nextRatings = {
@@ -1100,45 +1058,42 @@ export function PairwiseRating({ locale = "zh" }) {
 
   async function handleSave(ratingsOverride = ratings) {
     if (!activeRecord) return;
-
-    const nextFile = {
+    const updatedAt = new Date().toISOString();
+    const nextRecord = {
+      record_id: activeRecord.record_id,
+      scenario: activeRecord.scenario,
+      question: activeRecord.question,
+      turn_count: activeRecord.turn_count,
+      updatedAt,
+      pairwise: ratingsOverride.pairwise,
+      pairwise_meta: {
+        candidate_a_file: selectedCandidateAFile,
+        candidate_b_file: buildCandidateFileFromFolder(
+          getCandidateQuestionFolder(selectedCandidateAFile),
+          selectedCandidateBVariant,
+        ),
+      },
+    };
+    const recordToSave = {
       version: 1,
-      savedAt: new Date().toISOString(),
+      savedAt: updatedAt,
       records: {
-        ...(savedRatingsFile?.records ?? {}),
-        [activeRecord.record_id]: {
-          ...(savedRatingsFile?.records?.[activeRecord.record_id] ?? {}),
-          record_id: activeRecord.record_id,
-          scenario: activeRecord.scenario,
-          question: activeRecord.question,
-          turn_count: activeRecord.turn_count,
-          updatedAt: new Date().toISOString(),
-          pairwise: ratingsOverride.pairwise,
-          pairwise_meta: {
-            candidate_a_file: selectedCandidateAFile,
-            candidate_b_file: buildCandidateFileFromFolder(
-              getCandidateQuestionFolder(selectedCandidateAFile),
-              selectedCandidateBVariant,
-            ),
-          },
-        },
+        [activeRecord.record_id]: nextRecord,
       },
     };
 
     try {
-      const response = await fetch(appUrl("/api/qualitative-ratings"), {
+      const response = await fetch(appUrl("/api/qualitative-ratings-save"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(nextFile),
+        body: JSON.stringify(recordToSave),
       });
 
       if (!response.ok) throw new Error(`save failed:${response.status}`);
 
-      const savedFile = await response.json();
-      writeLocalRatings(savedFile);
-      setSavedRatingsFile(savedFile);
+      await response.json();
       try {
         const folderResponse = await fetch(appUrl("/api/qualitative-ratings-folder?kind=pairwise"));
         if (folderResponse.ok) {
@@ -1149,16 +1104,12 @@ export function PairwiseRating({ locale = "zh" }) {
       setSaveState("Pairwise 评分已保存到服务器端 JSON 文件。");
       advanceToNextCandidates();
     } catch (error) {
-      writeLocalRatings(nextFile);
-      setSavedRatingsFile(nextFile);
       const message = String(error?.message ?? "");
       if (message.includes("404")) {
-        setSaveState("保存接口不存在，Pairwise 评分已回退到当前浏览器本地存储。");
-        advanceToNextCandidates();
+        setSaveState("保存接口不存在，Pairwise 评分未保存。");
         return;
       }
-      setSaveState("服务器保存失败，Pairwise 评分已暂存到当前浏览器本地。");
-      advanceToNextCandidates();
+      setSaveState("服务器保存失败，Pairwise 评分未保存。");
     }
   }
 
@@ -1180,6 +1131,7 @@ export function PairwiseRating({ locale = "zh" }) {
       </div>
 
       <section className="panel pairwise">
+        <div className="pairwise-debug-floating" title={ratingFolderDebugTitle}>{ratingFolderDebugMessage}</div>
         <div className="pairwise-hero">
           <div className="pairwise-hero-copy">
             <span className="eyebrow">{copy.eyebrow}</span>
@@ -1188,7 +1140,6 @@ export function PairwiseRating({ locale = "zh" }) {
             <div className="pairwise-hero-hover">
               <p>{copy.hero}</p>
               <div className="pairwise-hero-pills">
-                <span className="pill">{copy.summaryCount}: {pairwiseSummary.count}</span>
                 <span className="pill">{copy.pill}</span>
                 {pairwiseCandidates.candidates.length ? (
                   <span className="pill">

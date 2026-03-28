@@ -11,7 +11,6 @@ export function parseNumber(value) {
   //     except (TypeError, ValueError):
   //         return None
   //     return num if math.isfinite(num) else None
-  debugger;
   if (!value) return null;
   const cleaned = value.replace(/\?/g, "").trim();
   if (!cleaned) return null;
