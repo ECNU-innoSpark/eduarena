@@ -3,6 +3,31 @@ import { appUrl } from "./appUrl";
 import { formatScore, parseCsv, parseNumber } from "./qualitativeUtils";
 
 export const LEADERBOARD_CSS = `
+  .leaderboard-header {
+    display: grid;
+    gap: 22px;
+    margin-bottom: 28px;
+  }
+
+  .leaderboard-title {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+
+  .leaderboard-title-icon {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+  }
+
   .hero {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
@@ -69,34 +94,58 @@ export const LEADERBOARD_CSS = `
 
   .controls {
     display: grid;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 16px;
   }
 
   .tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 10px 14px;
+    align-items: center;
   }
 
   .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     border: 0;
     border-radius: 999px;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text);
+    background: transparent;
+    color: var(--muted);
     cursor: pointer;
     transition: 150ms ease;
     font-family: "SF Pro Display", "PingFang SC", sans-serif;
+    font-size: 12px;
+    line-height: 1.1;
   }
 
   .tab.active {
-    background: var(--accent);
-    color: white;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+  }
+
+  .tab-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    color: currentColor;
+    font-size: 12px;
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  .tab-label {
+    white-space: nowrap;
   }
 
   .search {
     min-width: 0;
+  }
+
+  .benchmark-filter input {
+    border-style: dashed;
   }
 
   .search input {
@@ -123,16 +172,65 @@ export const LEADERBOARD_CSS = `
     background: rgba(255, 255, 255, 0.02);
   }
 
+  .chart-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .chart-mode-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .chart-mode-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+  }
+
+  .chart-mode-tab.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+  }
+
+  .chart-mode-icon {
+    font-size: 12px;
+    line-height: 1;
+  }
+
   .bars {
     display: grid;
-    gap: 12px;
+    gap: 10px;
   }
 
   .bar-row {
     display: grid;
-    grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) 74px;
+    grid-template-columns: 28px minmax(180px, 260px) minmax(0, 1fr) 96px;
     gap: 12px;
     align-items: center;
+    padding: 4px 0;
+  }
+
+  .bar-rank {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
   }
 
   .bar-label {
@@ -141,7 +239,8 @@ export const LEADERBOARD_CSS = `
 
   .bar-label strong {
     display: block;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -149,21 +248,21 @@ export const LEADERBOARD_CSS = `
 
   .bar-label span {
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .bar-track {
     position: relative;
-    height: 14px;
+    height: 12px;
     border-radius: 999px;
-    background: rgba(31, 41, 55, 0.08);
+    background: rgba(255, 255, 255, 0.04);
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, var(--cool), var(--accent));
+    background: linear-gradient(90deg, #efe9b6 0%, #9fd8b5 45%, #2da487 100%);
   }
 
   .bar-value {
@@ -172,21 +271,142 @@ export const LEADERBOARD_CSS = `
     font-size: 13px;
   }
 
+  .rank-table {
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.015);
+  }
+
+  .rank-table-head,
+  .rank-row {
+    display: grid;
+    grid-template-columns: 76px minmax(260px, 1.8fr) 120px 120px 128px;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .rank-table-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .rank-table-head span:nth-child(1),
+  .rank-table-head span:nth-child(n + 3) {
+    text-align: center;
+  }
+
+  .rank-row {
+    width: 100%;
+    padding: 18px;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .rank-row:first-of-type {
+    border-top: 0;
+  }
+
+  .rank-row:hover {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .rank-row.active {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .rank-cell-rank,
+  .rank-cell-score,
+  .rank-cell-quality,
+  .rank-cell-benchmark {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rank-cell-rank {
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .rank-cell-model {
+    min-width: 0;
+  }
+
+  .rank-primary {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rank-secondary {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .rank-cell-score,
+  .rank-cell-quality,
+  .rank-cell-benchmark {
+    text-align: center;
+    font-size: 14px;
+  }
+
   .detail-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
     gap: 12px;
     margin-bottom: 18px;
   }
 
+  .detail-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .detail-brand {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
   .detail-header h3 {
-    margin: 0 0 6px;
-    font-size: 24px;
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.02;
+  }
+
+  .detail-subline {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .detail-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    font-size: 12px;
   }
 
   .score-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 18px;
   }
@@ -209,28 +429,88 @@ export const LEADERBOARD_CSS = `
     font-size: 22px;
   }
 
-  .metric-list {
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .spec-card {
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .spec-card span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .spec-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 20px;
+  }
+
+  .benchmark-card {
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .benchmark-table {
     display: grid;
     gap: 10px;
   }
 
-  .metric-item {
-    padding: 12px 14px;
-    border-radius: 16px;
-    border: 1px solid var(--line);
+  .benchmark-table-head,
+  .benchmark-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 1.2fr) minmax(160px, 1.8fr) 92px 72px;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .benchmark-table-head {
+    padding: 0 10px 8px;
+    color: var(--muted);
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .benchmark-table-head span:nth-child(2) {
+    justify-self: stretch;
+  }
+
+  .benchmark-row {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .benchmark-row:hover {
     background: rgba(255, 255, 255, 0.03);
   }
 
-  .metric-item header {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
+  .benchmark-name {
     font-size: 13px;
   }
 
-  .metric-item header span:last-child {
+  .benchmark-score,
+  .benchmark-rank {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .benchmark-score {
+    font-size: 13px;
+  }
+
+  .benchmark-rank {
     color: var(--muted);
+    font-size: 12px;
   }
 
   @media (max-width: 920px) {
@@ -239,19 +519,46 @@ export const LEADERBOARD_CSS = `
       grid-template-columns: 1fr;
     }
 
-    .search {
-      margin-left: 0;
+    .tabs {
+      gap: 10px;
+    }
+
+    .score-grid,
+    .spec-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 640px) {
-    .bar-row {
+    .rank-table-head,
+    .rank-row {
       grid-template-columns: 1fr;
       gap: 8px;
     }
 
     .score-grid {
       grid-template-columns: 1fr;
+    }
+
+    .spec-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .rank-cell-rank,
+    .rank-cell-score,
+    .rank-cell-quality,
+    .rank-cell-benchmark {
+      text-align: left;
+    }
+
+    .benchmark-table-head,
+    .benchmark-row {
+      grid-template-columns: 1fr;
+    }
+
+    .benchmark-score,
+    .benchmark-rank {
+      text-align: left;
     }
   }
 `;
@@ -370,6 +677,32 @@ export function labelFor(key, locale = "zh") {
   return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? key);
 }
 
+function isBenchmarkViewKey(key) {
+  return BENCHMARK_METRICS.some((item) => item.key === key) || key === "benchmarkAvg";
+}
+
+const TAB_ICONS = {
+  overall: "◫",
+  qualityAvg: "◔",
+  benchmarkAvg: "⌁",
+  knowledge: "☰",
+  guided: "➜",
+  crossDiscipline: "✣",
+  scenario: "✦",
+  mmluPro: "◎",
+  math: "⊟",
+  ifeval: "☷",
+  ceval: "⋄",
+  humaneval: "</>",
+  lcbCode: "⌘",
+  aime2024: "△",
+  simpleQa: "◌",
+  chineseSimpleQa: "文",
+  instruction: "↳",
+  worldKnowledge: "◍",
+  reasoning: "⋯",
+};
+
 function localizedLabel(label, locale) {
   return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? "");
 }
@@ -453,19 +786,12 @@ export function useLeaderboardData({ activeView, query }) {
   };
 }
 
-function MetricItem({ label, value, max }) {
-  const width = value == null ? 0 : Math.max(4, (value / max) * 100);
-  return (
-    <div className="metric-item">
-      <header>
-        <span>{label}</span>
-        <span>{formatScore(value)}</span>
-      </header>
-      <div className="bar-track">
-        <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
-      </div>
-    </div>
-  );
+function metricRank(models, targetModel, metricKey) {
+  const ranked = models
+    .filter((item) => item?.[metricKey] != null)
+    .sort((a, b) => (b[metricKey] ?? -Infinity) - (a[metricKey] ?? -Infinity));
+  const index = ranked.findIndex((item) => item.name === targetModel.name);
+  return index >= 0 ? `${index + 1}/${ranked.length}` : "--";
 }
 
 function LeaderboardView({
@@ -482,7 +808,10 @@ function LeaderboardView({
   setQuery,
   setSelectedModel,
 }) {
+  const [chartMode, setChartMode] = useState("table");
+  const [benchmarkQuery, setBenchmarkQuery] = useState("");
   const copy = locale === "en" ? {
+    pageTitle: "Education Leaderboard",
     eyebrow: "llm leaderboard",
     title: "A dual-axis leaderboard for teaching ability and public benchmarks",
     hero: "A React visualization generated directly from local CSV files, combining teaching-dimension ratings and public benchmarks into a filterable, switchable, single-model-inspection leaderboard page.",
@@ -491,6 +820,7 @@ function LeaderboardView({
     domestic: "Domestic",
     foreign: "International",
     search: "Search model / note / version",
+    benchmarkFilter: "Filter benchmark tabs / metrics",
     rankingSuffix: "Ranking",
     rankingNote: "Sorted automatically by the current view",
     uncategorized: "Uncategorized",
@@ -505,6 +835,7 @@ function LeaderboardView({
     hundredScale: "100-point scale",
     pickModel: "Select a model on the left to inspect detailed scores.",
   } : {
+    pageTitle: "行业榜单",
     eyebrow: "llm leaderboard",
     title: "教学能力与通用基准的双轴榜单",
     hero: "从本地 CSV 直接生成的 React 可视化，聚合教学维度打分与公开 benchmark，用最少文件提供一个可筛选、可切换维度、可查看单模型细节的榜单页面。",
@@ -513,6 +844,7 @@ function LeaderboardView({
     domestic: "国内模型",
     foreign: "国外模型",
     search: "搜索模型名 / 备注 / 版本号",
+    benchmarkFilter: "筛选 benchmark 维度",
     rankingSuffix: "排行",
     rankingNote: "按当前维度自动排序",
     uncategorized: "未分类",
@@ -528,69 +860,164 @@ function LeaderboardView({
     pickModel: "选择左侧模型以查看详细得分。",
   };
 
+  const visibleViewOptions = useMemo(() => {
+    const normalized = benchmarkQuery.trim().toLowerCase();
+    return VIEW_OPTIONS.filter((option) => {
+      if (!isBenchmarkViewKey(option.key)) return true;
+      if (option.key === activeView) return true;
+      if (!normalized) return true;
+      const label = typeof option.label === "string" ? option.label : (option.label?.[locale] ?? option.label?.zh ?? "");
+      return label.toLowerCase().includes(normalized);
+    });
+  }, [activeView, benchmarkQuery, locale]);
+
+  const visibleBenchmarkMetrics = useMemo(() => {
+    const normalized = benchmarkQuery.trim().toLowerCase();
+    return BENCHMARK_METRICS.filter((metric) => {
+      if (!normalized) return true;
+      const label = localizedLabel(metric.label, locale);
+      return label.toLowerCase().includes(normalized);
+    });
+  }, [benchmarkQuery, locale]);
+
   return (
     <>
-      <section className="controls">
-        <div className="tabs">
-          {VIEW_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              className={`tab ${activeView === option.key ? "active" : ""}`}
-              onClick={() => setActiveView(option.key)}
-              type="button"
-            >
-              {typeof option.label === "string" ? option.label : (option.label?.[locale] ?? option.label?.zh)}
-            </button>
-          ))}
+      <section className="leaderboard-header">
+        <div className="leaderboard-title">
+          <span className="leaderboard-title-icon" aria-hidden="true">☷</span>
+          <span>{copy.pageTitle}</span>
         </div>
-        <label className="search">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={copy.search}
-          />
-        </label>
+        <div className="controls">
+          <div className="tabs">
+            {visibleViewOptions.map((option) => (
+              <button
+                key={option.key}
+                className={`tab ${activeView === option.key ? "active" : ""}`}
+                onClick={() => setActiveView(option.key)}
+                type="button"
+              >
+                <span className="tab-icon" aria-hidden="true">{TAB_ICONS[option.key] ?? "•"}</span>
+                <span className="tab-label">
+                  {typeof option.label === "string" ? option.label : (option.label?.[locale] ?? option.label?.zh)}
+                </span>
+              </button>
+            ))}
+          </div>
+          <label className="search benchmark-filter">
+            <input
+              value={benchmarkQuery}
+              onChange={(event) => setBenchmarkQuery(event.target.value)}
+              placeholder={copy.benchmarkFilter}
+            />
+          </label>
+          <label className="search">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={copy.search}
+            />
+          </label>
+        </div>
       </section>
 
       <section className="layout">
         <article className="chart-panel">
-          <div className="section-title">
-            <h2>{labelFor(activeView, locale)} {copy.rankingSuffix}</h2>
-            <span>{copy.rankingNote}</span>
+          <div className="chart-toolbar">
+            <div className="chart-mode-tabs">
+              <button
+                type="button"
+                className={`chart-mode-tab ${chartMode === "bar" ? "active" : ""}`}
+                onClick={() => setChartMode("bar")}
+              >
+                <span className="chart-mode-icon" aria-hidden="true">▤</span>
+                <span>Bar Chart</span>
+              </button>
+              <button
+                type="button"
+                className={`chart-mode-tab ${chartMode === "table" ? "active" : ""}`}
+                onClick={() => setChartMode("table")}
+              >
+                <span className="chart-mode-icon" aria-hidden="true">☷</span>
+                <span>Table</span>
+              </button>
+            </div>
+            <span className="section-title" style={{ margin: 0 }}>
+              <span>{copy.rankingNote}</span>
+            </span>
           </div>
           {ranked.length ? (
-            <div className="bars">
-              {ranked.map((model, index) => {
-                const max = scoreMax(activeView);
-                const width = Math.max(6, (model.activeScore / max) * 100);
-                return (
-                  <button
-                    key={model.name}
-                    className="bar-row"
-                    type="button"
-                    onClick={() => setSelectedModel(model)}
-                    style={{
-                      border: 0,
-                      background: "transparent",
-                      padding: 0,
-                      textAlign: "left",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div className="bar-label">
-                      <strong>
-                        {index + 1}. {model.name}
-                      </strong>
-                      <span>{model.note || copy.uncategorized}</span>
-                    </div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
-                    </div>
-                    <div className="bar-value">{formatScore(model.activeScore)}</div>
-                  </button>
-                );
-              })}
-            </div>
+            chartMode === "bar" ? (
+              <div className="bars">
+                {ranked.map((model, index) => {
+                  const max = scoreMax(activeView);
+                  const width = Math.max(6, (model.activeScore / max) * 100);
+                  return (
+                    <button
+                      key={model.name}
+                      className="bar-row"
+                      type="button"
+                      onClick={() => setSelectedModel(model)}
+                      style={{
+                        border: 0,
+                        background: "transparent",
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div className="bar-rank">{index + 1}</div>
+                      <div className="bar-label">
+                        <strong>{model.name}</strong>
+                        <span>{model.note || copy.untagged}</span>
+                      </div>
+                      <div className="bar-track">
+                        <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
+                      </div>
+                      <div className="bar-value">{formatScore(model.activeScore)}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rank-table">
+                <div className="rank-table-head">
+                  <span>{locale === "en" ? "Rank" : "排名"}</span>
+                  <span>{locale === "en" ? "Model" : "模型"}</span>
+                  <span>{locale === "en" ? "Score" : "得分"}</span>
+                  <span>{locale === "en" ? "Teaching" : "教学均分"}</span>
+                  <span>{locale === "en" ? "Benchmark" : "Benchmark 均分"}</span>
+                </div>
+                {ranked.map((model, index) => {
+                  return (
+                    <button
+                      key={model.name}
+                      className={`rank-row ${selectedModel?.name === model.name ? "active" : ""}`}
+                      type="button"
+                      onClick={() => setSelectedModel(model)}
+                      style={{
+                        border: 0,
+                        background: "transparent",
+                        padding: 0,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div className="rank-cell-rank">{index + 1}</div>
+                      <div className="rank-cell-model">
+                        <div className="rank-primary">{model.name}</div>
+                        <div className="rank-secondary">
+                          {model.note || copy.untagged}
+                          {model.version ? ` · v${model.version}` : ""}
+                        </div>
+                      </div>
+                      <div className="rank-cell-score">{formatScore(model.activeScore)}</div>
+                      <div className="rank-cell-quality">{formatScore(model.qualityAvg)}</div>
+                      <div className="rank-cell-benchmark">{formatScore(model.benchmarkAvg)}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )
           ) : (
             <div className="empty">{copy.noResults}</div>
           )}
@@ -600,19 +1027,29 @@ function LeaderboardView({
           {selectedModel ? (
             <>
               <div className="detail-header">
-                <div>
-                  <h3>{selectedModel.name}</h3>
-                  <span className="pill">
-                    {selectedModel.note || copy.untagged}
-                    {selectedModel.version ? ` · v${selectedModel.version}` : ""}
+                <div className="detail-topline">
+                  <span className="detail-brand">{selectedModel.note || copy.untagged}</span>
+                  <span className="detail-chip">
+                    {copy.overall} {formatScore(scoreValue(selectedModel, "overall"))}
                   </span>
                 </div>
-                <div className="pill">
-                  {copy.overall} {formatScore(scoreValue(selectedModel, "overall"))}
+                <div>
+                  <h3>{selectedModel.name}</h3>
+                  <div className="detail-subline">
+                    {selectedModel.version ? `v${selectedModel.version}` : copy.untagged}
+                  </div>
                 </div>
               </div>
 
               <div className="score-grid">
+                <div className="score-card">
+                  <span>{locale === "en" ? "Version" : "版本"}</span>
+                  <strong>{selectedModel.version ? `v${selectedModel.version}` : "--"}</strong>
+                </div>
+                <div className="score-card">
+                  <span>{locale === "en" ? "Category" : "类别"}</span>
+                  <strong>{selectedModel.note || copy.untagged}</strong>
+                </div>
                 <div className="score-card">
                   <span>{copy.teachingAvg}</span>
                   <strong>{formatScore(selectedModel.qualityAvg)}</strong>
@@ -623,34 +1060,42 @@ function LeaderboardView({
                 </div>
               </div>
 
-              <div className="section-title">
-                <h3>{copy.teachingMetrics}</h3>
-                <span>{copy.fiveScale}</span>
-              </div>
-              <div className="metric-list">
-                {QUALITY_METRICS.map((metric) => (
-                  <MetricItem
-                    key={metric.key}
-                    label={localizedLabel(metric.label, locale)}
-                    value={selectedModel[metric.key]}
-                    max={metric.max}
-                  />
+              <div className="spec-grid">
+                {QUALITY_METRICS.filter((metric) => metric.key !== "qualityAvg").map((metric) => (
+                  <div key={metric.key} className="spec-card">
+                    <span>{localizedLabel(metric.label, locale)}</span>
+                    <strong>{formatScore(selectedModel[metric.key])}</strong>
+                  </div>
                 ))}
               </div>
 
               <div className="section-title" style={{ marginTop: 18 }}>
                 <h3>{copy.benchmarkMetrics}</h3>
-                <span>{copy.hundredScale}</span>
+                <span>{locale === "en" ? "Score / Rank" : "分数 / 排名"}</span>
               </div>
-              <div className="metric-list">
-                {BENCHMARK_METRICS.map((metric) => (
-                  <MetricItem
-                    key={metric.key}
-                    label={localizedLabel(metric.label, locale)}
-                    value={selectedModel[metric.key]}
-                    max={metric.max}
-                  />
-                ))}
+              <div className="benchmark-card">
+                <div className="benchmark-table">
+                  <div className="benchmark-table-head">
+                    <span>{locale === "en" ? "Benchmark" : "指标"}</span>
+                    <span />
+                    <span>{locale === "en" ? "Score" : "分数"}</span>
+                    <span>{locale === "en" ? "Rank" : "排名"}</span>
+                  </div>
+                  {visibleBenchmarkMetrics.map((metric) => {
+                    const value = selectedModel[metric.key];
+                    const width = value == null ? 0 : Math.max(4, (value / metric.max) * 100);
+                    return (
+                      <div key={metric.key} className="benchmark-row">
+                        <span className="benchmark-name">{localizedLabel(metric.label, locale)}</span>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
+                        </div>
+                        <span className="benchmark-score">{formatScore(value)}</span>
+                        <span className="benchmark-rank">{metricRank(models, selectedModel, metric.key)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </>
           ) : (
