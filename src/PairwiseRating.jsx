@@ -1122,35 +1122,8 @@ ${latestText}`;
 
   return (
     <>
-      <div className="content-topbar">
-        <div className="topbar-title">
-          {copy.workspace}
-          <strong>{copy.title}</strong>
-        </div>
-        <div className="topbar-meta">{copy.meta}</div>
-      </div>
-
       <section className="panel pairwise">
         <div className="pairwise-debug-floating" title={ratingFolderDebugTitle}>{ratingFolderDebugMessage}</div>
-        <div className="pairwise-hero">
-          <div className="pairwise-hero-copy">
-            <span className="eyebrow">{copy.eyebrow}</span>
-            <h2>{copy.title}</h2>
-            <span className="pairwise-hero-hint">{copy.hoverHint}</span>
-            <div className="pairwise-hero-hover">
-              <p>{copy.hero}</p>
-              <div className="pairwise-hero-pills">
-                <span className="pill">{copy.pill}</span>
-                {pairwiseCandidates.candidates.length ? (
-                  <span className="pill">
-                    {pairwiseCandidates.candidates.reduce((sum, candidate) => sum + (candidate.turnCount ?? 0), 0)} {copy.messagesUnit}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {activeRecord ? (
           <div className="pairwise-layout">
             <article className="pairwise-candidates">
