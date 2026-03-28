@@ -10,9 +10,9 @@ import {
 const APP_COPY = {
   zh: {
     sections: [
-      { key: "qualitative", label: "新评审", note: "对话消息与人工评分", icon: "◔" },
+      { key: "pairwise", label: "对战", note: "记录、消息与双候选对比评分", icon: "⌕" },
+      // { key: "qualitative", label: "新评审", note: "对话消息与人工评分", icon: "◔" },
       { key: "leaderboard", label: "榜单", note: "教学能力与通用基准双轴榜单", icon: "☷" },
-      { key: "pairwise", label: "搜索", note: "记录、消息与双候选对比评分", icon: "⌕" },
     ],
     workspaceLabel: "更早",
     sidebarCopy: "教学榜单与质性评审工作台。左侧切换 workspace，右侧查看当前内容。",
@@ -31,9 +31,9 @@ const APP_COPY = {
   },
   en: {
     sections: [
-      { key: "qualitative", label: "New Chat", note: "Conversation messages and human ratings", icon: "◔" },
+      { key: "pairwise", label: "Arena", note: "Record, messages, and pairwise scoring", icon: "⌕" },
       { key: "leaderboard", label: "Leaderboard", note: "Teaching ability and benchmark ranking", icon: "☷" },
-      { key: "pairwise", label: "Search", note: "Record, messages, and pairwise scoring", icon: "⌕" },
+      // { key: "qualitative", label: "New Chat", note: "Conversation messages and human ratings", icon: "◔" },
     ],
     workspaceLabel: "Older",
     sidebarCopy: "A workspace for teaching leaderboards and qualitative review. Switch workspaces on the left and inspect content on the right.",
