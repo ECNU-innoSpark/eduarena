@@ -163,6 +163,7 @@ class PairwiseInitialLoadingTest(unittest.TestCase):
                         "question": "同一道题",
                         "turn_count": 3,
                         "updatedAt": "2026-03-28T09:30:00.000Z",
+                        "user_email": "  KLEEEEEE@GMAIL.COM  ",
                         "pairwise": {
                             "winner": "b",
                             "better_answer": "b",
@@ -182,12 +183,15 @@ class PairwiseInitialLoadingTest(unittest.TestCase):
 
             self.assertEqual(save_result["targetDir"], workflow.paths.pairwise_ratings_dir)
             self.assertEqual(save_result["nextFile"]["records"]["record-glm-5"]["pairwise"]["winner"], "b")
+            self.assertEqual(save_result["nextFile"]["records"]["record-glm-5"]["user_email"], "kleeeeee@gmail.com")
             self.assertTrue(save_result["snapshotPath"].exists())
 
             self.assertEqual(
                 save_result["nextFile"]["records"]["record-glm-5"]["pairwise_meta"]["candidate_b_file"],
                 "四个场景/引导式讲题辅导/q_demo_pairwise/qz__Kimi-K25/conversation-messages.json",
             )
+            saved_snapshot = json.loads(save_result["snapshotPath"].read_text(encoding="utf-8"))
+            self.assertEqual(saved_snapshot["records"]["record-glm-5"]["user_email"], "kleeeeee@gmail.com")
             self.assertEqual(workflow.read_aggregated_ratings()["records"], {})
 
             pairwise_folder_summary_after = workflow.build_folder_summary(workflow.paths.pairwise_ratings_dir)

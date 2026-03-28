@@ -160,6 +160,19 @@ def is_iso_date_string(value):
     return parse_time(value) > 0
 
 
+def normalize_record_user_email(record):
+    if not isinstance(record, dict):
+        return record
+
+    normalized_record = dict(record)
+    user_email = trim_text(record.get("user_email")).lower()
+    if user_email:
+        normalized_record["user_email"] = user_email
+    else:
+        normalized_record.pop("user_email", None)
+    return normalized_record
+
+
 @dataclass(frozen=True)
 class PairwiseWorkflowPaths:
     root: Path
@@ -408,18 +421,22 @@ class PairwiseRatingWorkflow:
 
     def save_ratings_payload(self, payload):
         current_file = self.read_aggregated_ratings()
+        payload_records = {
+            record_id: normalize_record_user_email(record)
+            for record_id, record in payload.get("records", {}).items()
+        }
         next_file = {
             "version": payload.get("version", current_file.get("version", 1)),
             "savedAt": payload.get("savedAt") or datetime.utcnow().isoformat(),
             "records": {
                 **current_file.get("records", {}),
-                **payload.get("records", {}),
+                **payload_records,
             },
         }
         snapshot_data = {
             "version": next_file["version"],
             "savedAt": next_file["savedAt"],
-            "records": extract_latest_records(payload.get("records", {})),
+            "records": extract_latest_records(payload_records),
         }
         target_dir = self.paths.pairwise_ratings_dir if self.has_pairwise_ratings(snapshot_data["records"]) else self.paths.ratings_dir
         ensure_dir(target_dir)

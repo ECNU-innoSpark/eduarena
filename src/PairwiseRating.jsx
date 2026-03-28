@@ -1,11 +1,31 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { ANNOTATION_CSS } from "./Annotation";
-import { appUrl } from "./appUrl";
-import { TypeaheadDropdown } from "./Components";
-import { normalizeQualitativeRecord } from "./qualitativeUtils";
+import {ANNOTATION_CSS} from "./Annotation";
+import {appUrl} from "./appUrl";
+import {TypeaheadDropdown} from "./Components";
+import {normalizeQualitativeRecord} from "./qualitativeUtils";
+
+const USER_STORAGE_KEY = "eduarena-user";
+
+function loadStoredUserEmail() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) {
+      return "";
+    }
+
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.email === "string" ? parsed.email.trim().toLowerCase() : "";
+  } catch {
+    return "";
+  }
+}
 
 export const PAIRWISE_CSS = `
   ${ANNOTATION_CSS}
@@ -1115,26 +1135,27 @@ ${latestText}`;
   async function handleSave(ratingsOverride = ratings) {
     if (!activeRecord) return;
     const updatedAt = new Date().toISOString();
-    const nextRecord = {
-      record_id: activeRecord.record_id,
-      scenario: activeRecord.scenario,
-      question: activeRecord.question,
-      turn_count: activeRecord.turn_count,
-      updatedAt,
-      pairwise: ratingsOverride.pairwise,
-      pairwise_meta: {
-        candidate_a_file: selectedCandidateAFile,
-        candidate_b_file: buildCandidateFileFromFolder(
-          getCandidateQuestionFolder(selectedCandidateAFile),
-          selectedCandidateBVariant,
-        ),
-      },
-    };
+    const userEmail = loadStoredUserEmail();
     const recordToSave = {
       version: 1,
       savedAt: updatedAt,
       records: {
-        [activeRecord.record_id]: nextRecord,
+        [activeRecord.record_id]: {
+          record_id: activeRecord.record_id,
+          scenario: activeRecord.scenario,
+          question: activeRecord.question,
+          turn_count: activeRecord.turn_count,
+          updatedAt,
+          ...(userEmail ? {user_email: userEmail} : {}),
+          pairwise: ratingsOverride.pairwise,
+          pairwise_meta: {
+            candidate_a_file: selectedCandidateAFile,
+            candidate_b_file: buildCandidateFileFromFolder(
+                getCandidateQuestionFolder(selectedCandidateAFile),
+                selectedCandidateBVariant,
+            ),
+          },
+        },
       },
     };
 

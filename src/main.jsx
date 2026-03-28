@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ANNOTATION_CSS, Annotation } from "./Annotation";
 import { PAIRWISE_CSS, PairwiseRating } from "./PairwiseRating";
@@ -28,6 +28,19 @@ const APP_COPY = {
     langLabel: "语言",
     langZh: "中文",
     langEn: "English",
+    loginSubtitle: "使用浏览器本地缓存保存当前用户，无需后端即可保持登录状态。",
+    loginName: "昵称",
+    loginEmail: "邮箱",
+    loginPassword: "密码",
+    loginButton: "登录并进入工作台",
+    loginHint: "这是演示级登录，仅用于本地识别当前用户，不适合生产环境。",
+    loginRequiredTitle: "先登录，再进入评审工作台",
+    loginRequiredBody: "EduArena 当前提供教学榜单、pairwise 评审与单条消息打分。登录后会在浏览器中缓存用户资料，刷新页面仍可恢复会话。",
+    loginStatus: "本地会话已启用",
+    logoutButton: "退出登录",
+    validationName: "请输入昵称",
+    validationEmail: "请输入有效邮箱",
+    validationPassword: "密码至少需要 4 个字符",
   },
   en: {
     sections: [
@@ -49,8 +62,45 @@ const APP_COPY = {
     langLabel: "Language",
     langZh: "中文",
     langEn: "English",
+    loginSubtitle: "Persist the current user in browser storage with no backend dependency.",
+    loginName: "Name",
+    loginEmail: "Email",
+    loginPassword: "Password",
+    loginButton: "Sign in and open workspace",
+    loginHint: "This is a demo-only login flow for local user persistence, not production security.",
+    loginRequiredTitle: "Sign in before entering the review workspace",
+    loginRequiredBody: "EduArena includes leaderboard views, pairwise review, and single-message scoring. After sign-in, the browser caches your profile so the session survives refresh.",
+    loginStatus: "Local session active",
+    logoutButton: "Sign out",
+    validationName: "Please enter a name",
+    validationEmail: "Please enter a valid email",
+    validationPassword: "Password must be at least 4 characters",
   },
 };
+
+const USER_STORAGE_KEY = "eduarena-user";
+
+function loadStoredUser() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed?.email || !parsed?.name) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 // 模仿 图中的侧边栏 只需要鼠标hover的时候显示 鼠标移动以后就不要显示
 const APP_SHELL_CSS = `
@@ -285,12 +335,145 @@ const APP_SHELL_CSS = `
     font-size: 13px;
   }
 
+  .account-card {
+    display: grid;
+    gap: 12px;
+  }
+
   .account-avatar {
     width: 24px;
     height: 24px;
     flex: 0 0 auto;
     border-radius: 999px;
     background: radial-gradient(circle at 35% 30%, #d57a35, #824019 55%, #2b180c 100%);
+  }
+
+  .account-avatar.large {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff4ea;
+  }
+
+  .account-info {
+    min-width: 0;
+  }
+
+  .account-email,
+  .account-status {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-status {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .account-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .link-btn {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--accent-strong);
+    cursor: pointer;
+  }
+
+  .login-panel {
+    max-width: 560px;
+    padding: 32px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top right, rgba(213, 122, 53, 0.18), transparent 32%),
+      linear-gradient(180deg, rgba(66, 57, 50, 0.92), rgba(42, 36, 32, 0.96));
+    box-shadow: var(--shadow);
+  }
+
+  .login-eyebrow {
+    margin: 0 0 10px;
+    color: var(--accent-strong);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .login-panel h1 {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1.02;
+    font-family: "Iowan Old Style", "Times New Roman", serif;
+    letter-spacing: -0.05em;
+  }
+
+  .login-panel p {
+    margin: 14px 0 0;
+    color: #d6d1c8;
+    line-height: 1.6;
+    max-width: 48ch;
+  }
+
+  .login-form {
+    margin-top: 26px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .login-field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .login-field span {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .login-field input {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 13px 14px;
+    color: var(--text);
+    background: rgba(20, 19, 18, 0.55);
+    outline: none;
+  }
+
+  .login-field input:focus {
+    border-color: rgba(241, 198, 160, 0.7);
+    box-shadow: 0 0 0 3px rgba(241, 198, 160, 0.12);
+  }
+
+  .primary-btn {
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #d57a35, #f1c6a0);
+    color: #221712;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .form-error {
+    margin: 2px 0 0;
+    color: #ffb1a9;
+    font-size: 13px;
+  }
+
+  .login-hint {
+    font-size: 12px;
+    color: var(--muted);
   }
 
   .content {
@@ -311,6 +494,10 @@ const APP_SHELL_CSS = `
       position: static;
       min-height: auto;
     }
+
+    .login-panel {
+      padding: 24px;
+    }
   }
 
   @media (max-width: 640px) {
@@ -327,8 +514,66 @@ function App() {
   const [activeSection, setActiveSection] = useState("leaderboard");
   const [activeView, setActiveView] = useState("overall");
   const [locale, setLocale] = useState("en");
+  const [user, setUser] = useState(() => loadStoredUser());
+  const [loginForm, setLoginForm] = useState({ name: "", email: "", password: "" });
+  const [loginError, setLoginError] = useState("");
   const copy = APP_COPY[locale];
   const sections = copy.sections;
+  const initials = user?.name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (user) {
+      window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      return;
+    }
+
+    window.localStorage.removeItem(USER_STORAGE_KEY);
+  }, [user]);
+
+  const handleLoginChange = (field) => (event) => {
+    const value = event.target.value;
+    setLoginError("");
+    setLoginForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleLoginSubmit = (event) => {
+    event.preventDefault();
+    const trimmedName = loginForm.name.trim();
+    const trimmedEmail = loginForm.email.trim().toLowerCase();
+    const password = loginForm.password.trim();
+
+    if (!trimmedName) {
+      setLoginError(copy.validationName);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setLoginError(copy.validationEmail);
+      return;
+    }
+
+    if (password.length < 4) {
+      setLoginError(copy.validationPassword);
+      return;
+    }
+
+    setUser({
+      name: trimmedName,
+      email: trimmedEmail,
+      loginAt: new Date().toISOString(),
+    });
+    setLoginForm({ name: "", email: "", password: "" });
+    setLoginError("");
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setLoginError("");
+  };
 
   return (
     <>
@@ -395,26 +640,84 @@ function App() {
             </div>
           </nav>
           <div className="sidebar-foot">
-            <div className="account-chip">
-              <div className="account-avatar" />
-              <span>kleeeeee@gmail.com</span>
-            </div>
+            {user ? (
+              <div className="account-card">
+                <div className="account-chip">
+                  <div className="account-avatar large">{initials}</div>
+                  <div className="account-info">
+                    <strong>{user.name}</strong>
+                    <span className="account-email">{user.email}</span>
+                    <span className="account-status">{copy.loginStatus}</span>
+                  </div>
+                </div>
+                <div className="account-actions">
+                  <button className="link-btn" onClick={handleLogout} type="button">
+                    {copy.logoutButton}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="account-status">{copy.loginRequiredTitle}</div>
+            )}
           </div>
         </aside>
 
         <section className="content">
           <div className="workspace">
-        {activeSection === "leaderboard" ? (
-          <Leaderboard
-            activeView={activeView}
-            locale={locale}
-            query={query}
-            setActiveView={setActiveView}
-            setQuery={setQuery}
-          />
-        ) : (
-          activeSection === "pairwise" ? <PairwiseRating locale={locale} /> : <Annotation locale={locale} />
-        )}
+            {user ? (
+              activeSection === "leaderboard" ? (
+                <Leaderboard
+                  activeView={activeView}
+                  locale={locale}
+                  query={query}
+                  setActiveView={setActiveView}
+                  setQuery={setQuery}
+                />
+              ) : (
+                activeSection === "pairwise" ? <PairwiseRating locale={locale} /> : <Annotation locale={locale} />
+              )
+            ) : (
+              <section className="login-panel">
+                <div className="login-eyebrow">EduArena</div>
+                <h1>{copy.loginRequiredTitle}</h1>
+                <p>{copy.loginRequiredBody}</p>
+                <form className="login-form" onSubmit={handleLoginSubmit}>
+                  <label className="login-field">
+                    <span>{copy.loginName}</span>
+                    <input
+                      autoComplete="name"
+                      onChange={handleLoginChange("name")}
+                      placeholder={copy.loginName}
+                      type="text"
+                      value={loginForm.name}
+                    />
+                  </label>
+                  <label className="login-field">
+                    <span>{copy.loginEmail}</span>
+                    <input
+                      autoComplete="email"
+                      onChange={handleLoginChange("email")}
+                      placeholder="name@example.com"
+                      type="email"
+                      value={loginForm.email}
+                    />
+                  </label>
+                  <label className="login-field">
+                    <span>{copy.loginPassword}</span>
+                    <input
+                      autoComplete="current-password"
+                      onChange={handleLoginChange("password")}
+                      placeholder="••••••••"
+                      type="password"
+                      value={loginForm.password}
+                    />
+                  </label>
+                  {loginError ? <div className="form-error">{loginError}</div> : null}
+                  <button className="primary-btn" type="submit">{copy.loginButton}</button>
+                  <div className="login-hint">{copy.loginSubtitle} {copy.loginHint}</div>
+                </form>
+              </section>
+            )}
           </div>
         </section>
       </main>
