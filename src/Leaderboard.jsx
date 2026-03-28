@@ -459,6 +459,7 @@ export const LEADERBOARD_CSS = `
     border-radius: 18px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
   }
 
   .benchmark-table {
@@ -469,7 +470,7 @@ export const LEADERBOARD_CSS = `
   .benchmark-table-head,
   .benchmark-row {
     display: grid;
-    grid-template-columns: minmax(110px, 1.2fr) minmax(160px, 1.8fr) 92px 72px;
+    grid-template-columns: minmax(0, 1fr) 92px 72px;
     gap: 12px;
     align-items: center;
   }
@@ -479,10 +480,6 @@ export const LEADERBOARD_CSS = `
     color: var(--muted);
     font-size: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .benchmark-table-head span:nth-child(2) {
-    justify-self: stretch;
   }
 
   .benchmark-row {
@@ -496,6 +493,8 @@ export const LEADERBOARD_CSS = `
 
   .benchmark-name {
     font-size: 13px;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .benchmark-score,
@@ -609,6 +608,18 @@ export const BENCHMARK_METRICS = [
   { key: "instruction", label: { zh: "指令遵循", en: "Instruction Following" }, max: 100 },
   { key: "worldKnowledge", label: { zh: "世界知识", en: "World Knowledge" }, max: 100 },
   { key: "reasoning", label: { zh: "复杂推理", en: "Reasoning" }, max: 100 },
+  { key: "aiIndexScore", label: { zh: "AI Index Score", en: "AI Index Score" }, max: 100 },
+  { key: "aiIndexRank", label: { zh: "AI Index Rank", en: "AI Index Rank" }, max: 200, higherIsBetter: false },
+  { key: "aiIndexPrice", label: { zh: "AI Index Price", en: "AI Index Price" }, max: 100, higherIsBetter: false },
+  { key: "aiIndexSpeed", label: { zh: "AI Index Speed", en: "AI Index Speed" }, max: 250 },
+  { key: "aiIndexLatency", label: { zh: "AI Index Latency", en: "AI Index Latency" }, max: 250, higherIsBetter: false },
+  { key: "aiIndexTotalResponse", label: { zh: "AI Index Total Response", en: "AI Index Total Response" }, max: 250, higherIsBetter: false },
+  { key: "lmArenaScore", label: { zh: "LM Arena Score", en: "LM Arena Score" }, max: 1600 },
+  { key: "lmArenaRank", label: { zh: "LM Arena Rank", en: "LM Arena Rank" }, max: 300, higherIsBetter: false },
+  { key: "lmArenaVotes", label: { zh: "LM Arena Votes", en: "LM Arena Votes" }, max: 100000 },
+  { key: "lmArenaInputPrice", label: { zh: "LM Arena Input Price", en: "LM Arena Input Price" }, max: 20, higherIsBetter: false },
+  { key: "lmArenaOutputPrice", label: { zh: "LM Arena Output Price", en: "LM Arena Output Price" }, max: 25, higherIsBetter: false },
+  { key: "lmArenaContextWindow", label: { zh: "LM Arena Context Window", en: "LM Arena Context Window" }, max: 2000000 },
 ];
 
 // Python equivalent:
@@ -666,6 +677,34 @@ export function scoreMax(key) {
   return all.find((item) => item.key === key)?.max ?? 100;
 }
 
+function metricMeta(key) {
+  if (key === "overall") return { max: 100, higherIsBetter: true };
+  return [...QUALITY_METRICS, ...BENCHMARK_METRICS].find((item) => item.key === key) ?? { max: 100, higherIsBetter: true };
+}
+
+function metricSortValue(model, key) {
+  const value = scoreValue(model, key);
+  if (value == null) return null;
+  return metricMeta(key).higherIsBetter === false ? -value : value;
+}
+
+function parseCurrencyNumber(value) {
+  if (value == null) return null;
+  const matched = String(value).match(/-?\d+(\.\d+)?/);
+  return matched ? Number(matched[0]) : null;
+}
+
+function parseScaledNumber(value) {
+  if (value == null) return null;
+  const raw = String(value).trim().toUpperCase();
+  const matched = raw.match(/(-?\d+(?:\.\d+)?)([KM])?/);
+  if (!matched) return null;
+  const base = Number(matched[1]);
+  if (matched[2] === "K") return base * 1000;
+  if (matched[2] === "M") return base * 1000000;
+  return base;
+}
+
 // Python equivalent:
 // def label_for(key):
 //     if key == "overall":
@@ -675,10 +714,6 @@ export function labelFor(key, locale = "zh") {
   if (key === "overall") return locale === "en" ? "Overall Score" : "综合得分";
   const label = VIEW_OPTIONS.find((item) => item.key === key)?.label;
   return typeof label === "string" ? label : (label?.[locale] ?? label?.zh ?? key);
-}
-
-function isBenchmarkViewKey(key) {
-  return BENCHMARK_METRICS.some((item) => item.key === key) || key === "benchmarkAvg";
 }
 
 const TAB_ICONS = {
@@ -701,6 +736,18 @@ const TAB_ICONS = {
   instruction: "↳",
   worldKnowledge: "◍",
   reasoning: "⋯",
+  aiIndexScore: "◫",
+  aiIndexRank: "#",
+  aiIndexPrice: "$",
+  aiIndexSpeed: "⇥",
+  aiIndexLatency: "◔",
+  aiIndexTotalResponse: "◷",
+  lmArenaScore: "◫",
+  lmArenaRank: "#",
+  lmArenaVotes: "◉",
+  lmArenaInputPrice: "$",
+  lmArenaOutputPrice: "↗",
+  lmArenaContextWindow: "⌂",
 };
 
 function localizedLabel(label, locale) {
@@ -738,6 +785,18 @@ export function useLeaderboardData({ activeView, query }) {
         instruction: parseNumber(cols[18]),
         worldKnowledge: parseNumber(cols[19]),
         reasoning: parseNumber(cols[20]),
+        aiIndexRank: parseNumber(cols[30]),
+        aiIndexScore: parseNumber(cols[31]),
+        aiIndexPrice: parseCurrencyNumber(cols[32]),
+        aiIndexSpeed: parseNumber(cols[33]),
+        aiIndexLatency: parseNumber(cols[34]),
+        aiIndexTotalResponse: parseNumber(cols[35]),
+        lmArenaRank: parseNumber(cols[46]),
+        lmArenaScore: parseNumber(cols[48]),
+        lmArenaVotes: parseNumber(cols[51]),
+        lmArenaInputPrice: parseCurrencyNumber(cols[53]),
+        lmArenaOutputPrice: parseCurrencyNumber(cols[54]),
+        lmArenaContextWindow: parseScaledNumber(cols[55]),
       }));
 
       setModels(items);
@@ -759,9 +818,13 @@ export function useLeaderboardData({ activeView, query }) {
 
   const ranked = useMemo(() => {
     return [...filtered]
-      .map((model) => ({ ...model, activeScore: scoreValue(model, activeView) }))
-      .filter((model) => model.activeScore != null)
-      .sort((a, b) => b.activeScore - a.activeScore);
+      .map((model) => ({
+        ...model,
+        activeScore: scoreValue(model, activeView),
+        activeSortValue: metricSortValue(model, activeView),
+      }))
+      .filter((model) => model.activeScore != null && model.activeSortValue != null)
+      .sort((a, b) => (b.activeSortValue ?? -Infinity) - (a.activeSortValue ?? -Infinity));
   }, [filtered, activeView]);
 
   useEffect(() => {
@@ -788,8 +851,9 @@ export function useLeaderboardData({ activeView, query }) {
 
 function metricRank(models, targetModel, metricKey) {
   const ranked = models
-    .filter((item) => item?.[metricKey] != null)
-    .sort((a, b) => (b[metricKey] ?? -Infinity) - (a[metricKey] ?? -Infinity));
+    .map((item) => ({ ...item, sortValue: metricSortValue(item, metricKey) }))
+    .filter((item) => item.sortValue != null)
+    .sort((a, b) => (b.sortValue ?? -Infinity) - (a.sortValue ?? -Infinity));
   const index = ranked.findIndex((item) => item.name === targetModel.name);
   return index >= 0 ? `${index + 1}/${ranked.length}` : "--";
 }
@@ -808,7 +872,7 @@ function LeaderboardView({
   setQuery,
   setSelectedModel,
 }) {
-  const [chartMode, setChartMode] = useState("table");
+  const [chartMode, setChartMode] = useState("bar");
   const [benchmarkQuery, setBenchmarkQuery] = useState("");
   const copy = locale === "en" ? {
     pageTitle: "Education Leaderboard",
@@ -863,7 +927,6 @@ function LeaderboardView({
   const visibleViewOptions = useMemo(() => {
     const normalized = benchmarkQuery.trim().toLowerCase();
     return VIEW_OPTIONS.filter((option) => {
-      if (!isBenchmarkViewKey(option.key)) return true;
       if (option.key === activeView) return true;
       if (!normalized) return true;
       const label = typeof option.label === "string" ? option.label : (option.label?.[locale] ?? option.label?.zh ?? "");
@@ -879,6 +942,12 @@ function LeaderboardView({
       return label.toLowerCase().includes(normalized);
     });
   }, [benchmarkQuery, locale]);
+
+  const activeMetricRange = useMemo(() => {
+    const values = ranked.map((model) => model.activeScore).filter((value) => value != null);
+    if (!values.length) return { min: 0, max: 0 };
+    return { min: Math.min(...values), max: Math.max(...values) };
+  }, [ranked]);
 
   return (
     <>
@@ -908,13 +977,6 @@ function LeaderboardView({
               value={benchmarkQuery}
               onChange={(event) => setBenchmarkQuery(event.target.value)}
               placeholder={copy.benchmarkFilter}
-            />
-          </label>
-          <label className="search">
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={copy.search}
             />
           </label>
         </div>
@@ -949,8 +1011,14 @@ function LeaderboardView({
             chartMode === "bar" ? (
               <div className="bars">
                 {ranked.map((model, index) => {
-                  const max = scoreMax(activeView);
-                  const width = Math.max(6, (model.activeScore / max) * 100);
+                  const { min, max } = activeMetricRange;
+                  const higherIsBetter = metricMeta(activeView).higherIsBetter !== false;
+                  const normalized = max === min
+                    ? 1
+                    : higherIsBetter
+                      ? (model.activeScore - min) / (max - min)
+                      : (max - model.activeScore) / (max - min);
+                  const width = Math.max(6, normalized * 100);
                   return (
                     <button
                       key={model.name}
@@ -1077,19 +1145,14 @@ function LeaderboardView({
                 <div className="benchmark-table">
                   <div className="benchmark-table-head">
                     <span>{locale === "en" ? "Benchmark" : "指标"}</span>
-                    <span />
                     <span>{locale === "en" ? "Score" : "分数"}</span>
                     <span>{locale === "en" ? "Rank" : "排名"}</span>
                   </div>
                   {visibleBenchmarkMetrics.map((metric) => {
                     const value = selectedModel[metric.key];
-                    const width = value == null ? 0 : Math.max(4, (value / metric.max) * 100);
                     return (
                       <div key={metric.key} className="benchmark-row">
                         <span className="benchmark-name">{localizedLabel(metric.label, locale)}</span>
-                        <div className="bar-track">
-                          <div className="bar-fill" style={{ width: `${Math.min(width, 100)}%` }} />
-                        </div>
                         <span className="benchmark-score">{formatScore(value)}</span>
                         <span className="benchmark-rank">{metricRank(models, selectedModel, metric.key)}</span>
                       </div>
