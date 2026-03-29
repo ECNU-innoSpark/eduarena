@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "updatedAt": "2026-03-29T04:18:17.492686+00:00",
+  "users": {
+    "edu1@gmail.com": {
+      "name": "a",
+      "email": "edu1@gmail.com",
+      "password_salt": "7543c89b1caa1749b359bcfd714da84e",
+      "password_hash": "a6802aae62a0fbcab414f11d9350d68dcdc0ba9d868074da42868364a50f4b19",
+      "createdAt": "2026-03-29T04:17:56.992857+00:00",
+      "updatedAt": "2026-03-29T04:18:17.492686+00:00",
+      "lastLoginAt": "2026-03-29T04:18:17.492686+00:00"
+    }
+  }
+}

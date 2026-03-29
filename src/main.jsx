@@ -6,6 +6,7 @@ import {
   LEADERBOARD_CSS,
   Leaderboard,
 } from "./Leaderboard";
+import { appUrl } from "./appUrl";
 
 const APP_COPY = {
   zh: {
@@ -28,19 +29,21 @@ const APP_COPY = {
     langLabel: "语言",
     langZh: "中文",
     langEn: "English",
-    loginSubtitle: "使用浏览器本地缓存保存当前用户，无需后端即可保持登录状态。",
+    loginSubtitle: "首次登录会在后端创建账户，用户资料与密码哈希会写入服务器端 JSON 文件。",
     loginName: "昵称",
     loginEmail: "邮箱",
     loginPassword: "密码",
     loginButton: "登录并进入工作台",
-    loginHint: "这是演示级登录，仅用于本地识别当前用户，不适合生产环境。",
+    loginHint: "登录成功后，浏览器仍会缓存当前会话，用于刷新后恢复状态。",
     loginRequiredTitle: "先登录，再进入评审工作台",
-    loginRequiredBody: "EduArena 当前提供教学榜单、pairwise 评审与单条消息打分。登录后会在浏览器中缓存用户资料，刷新页面仍可恢复会话。",
-    loginStatus: "本地会话已启用",
+    loginRequiredBody: "EduArena 当前提供教学榜单、pairwise 评审与单条消息打分。登录时会把账户资料与密码哈希保存到后端，并在浏览器中缓存当前会话。",
+    loginStatus: "后端账户已连接",
     logoutButton: "退出登录",
     validationName: "请输入昵称",
     validationEmail: "请输入有效邮箱",
     validationPassword: "密码至少需要 4 个字符",
+    loginBusy: "登录中...",
+    loginServerError: "登录服务不可用，请确认本地 API 已启动。",
   },
   en: {
     sections: [
@@ -62,19 +65,21 @@ const APP_COPY = {
     langLabel: "Language",
     langZh: "中文",
     langEn: "English",
-    loginSubtitle: "Persist the current user in browser storage with no backend dependency.",
+    loginSubtitle: "First sign-in creates the account on the backend and stores profile data with a hashed password in a server-side JSON file.",
     loginName: "Name",
     loginEmail: "Email",
     loginPassword: "Password",
     loginButton: "Sign in and open workspace",
-    loginHint: "This is a demo-only login flow for local user persistence, not production security.",
+    loginHint: "After a successful sign-in, the browser still caches the active session so refresh can restore it.",
     loginRequiredTitle: "Sign in before entering the review workspace",
-    loginRequiredBody: "EduArena includes leaderboard views, pairwise review, and single-message scoring. After sign-in, the browser caches your profile so the session survives refresh.",
-    loginStatus: "Local session active",
+    loginRequiredBody: "EduArena includes leaderboard views, pairwise review, and single-message scoring. Sign-in stores the account and hashed password on the backend, then caches the active session in the browser.",
+    loginStatus: "Backend account connected",
     logoutButton: "Sign out",
     validationName: "Please enter a name",
     validationEmail: "Please enter a valid email",
     validationPassword: "Password must be at least 4 characters",
+    loginBusy: "Signing in...",
+    loginServerError: "Auth service is unavailable. Make sure the local API server is running.",
   },
 };
 
@@ -465,6 +470,11 @@ const APP_SHELL_CSS = `
     cursor: pointer;
   }
 
+  .primary-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
   .form-error {
     margin: 2px 0 0;
     color: #ffb1a9;
@@ -477,6 +487,7 @@ const APP_SHELL_CSS = `
   }
 
   .content {
+    position: relative;
     min-width: 0;
     padding: 18px;
   }
@@ -517,6 +528,7 @@ function App() {
   const [user, setUser] = useState(() => loadStoredUser());
   const [loginForm, setLoginForm] = useState({ name: "", email: "", password: "" });
   const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const copy = APP_COPY[locale];
   const sections = copy.sections;
   const initials = user?.name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
@@ -540,7 +552,7 @@ function App() {
     setLoginForm((current) => ({ ...current, [field]: value }));
   };
 
-  const handleLoginSubmit = (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
     const trimmedName = loginForm.name.trim();
     const trimmedEmail = loginForm.email.trim().toLowerCase();
@@ -561,13 +573,40 @@ function App() {
       return;
     }
 
-    setUser({
-      name: trimmedName,
-      email: trimmedEmail,
-      loginAt: new Date().toISOString(),
-    });
-    setLoginForm({ name: "", email: "", password: "" });
-    setLoginError("");
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch(appUrl("/api/auth/login"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          email: trimmedEmail,
+          password,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setLoginError(payload?.error || copy.loginServerError);
+        return;
+      }
+
+      if (!payload?.user?.email || !payload?.user?.name) {
+        setLoginError(copy.loginServerError);
+        return;
+      }
+
+      setUser(payload.user);
+      setLoginForm({ name: "", email: "", password: "" });
+      setLoginError("");
+    } catch {
+      setLoginError(copy.loginServerError);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleLogout = () => {
@@ -713,7 +752,9 @@ function App() {
                     />
                   </label>
                   {loginError ? <div className="form-error">{loginError}</div> : null}
-                  <button className="primary-btn" type="submit">{copy.loginButton}</button>
+                  <button className="primary-btn" disabled={isLoggingIn} type="submit">
+                    {isLoggingIn ? copy.loginBusy : copy.loginButton}
+                  </button>
                   <div className="login-hint">{copy.loginSubtitle} {copy.loginHint}</div>
                 </form>
               </section>

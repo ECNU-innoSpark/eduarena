@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from api_routes import handle_get_request, handle_post_request, resolve_static_path
+from user_auth_store import AuthError
 
 
 class StubPaths:
@@ -39,6 +40,18 @@ class StubWorkflow:
             raise ValueError("bad payload")
         self.saved_payload = payload
         return {"nextFile": {"saved": True, "payload": payload}}
+
+
+class StubAuthStore:
+    def __init__(self):
+        self.saved_payload = None
+        self.fail_error = None
+
+    def authenticate_or_create_user(self, payload):
+        if self.fail_error is not None:
+            raise self.fail_error
+        self.saved_payload = payload
+        return {"user": {"name": payload.get("name"), "email": payload.get("email")}, "isNewUser": True}
 
 
 class ApiRoutesTest(unittest.TestCase):
@@ -102,6 +115,27 @@ class ApiRoutesTest(unittest.TestCase):
 
         self.assertEqual(response.status, 400)
         self.assertEqual(response.payload, {"error": "Invalid ratings payload"})
+
+    def test_handle_post_request_authenticates_user(self):
+        workflow = StubWorkflow()
+        auth_store = StubAuthStore()
+        payload = {"name": "Alice", "email": "alice@example.com", "password": "secret"}
+
+        response = handle_post_request("/api/auth/login", payload=payload, workflow=workflow, auth_store=auth_store)
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(auth_store.saved_payload, payload)
+        self.assertEqual(response.payload["user"]["email"], "alice@example.com")
+
+    def test_handle_post_request_maps_auth_errors(self):
+        workflow = StubWorkflow()
+        auth_store = StubAuthStore()
+        auth_store.fail_error = AuthError("Invalid email or password", status=401)
+
+        response = handle_post_request("/api/auth/login", payload={"email": "alice@example.com"}, workflow=workflow, auth_store=auth_store)
+
+        self.assertEqual(response.status, 401)
+        self.assertEqual(response.payload, {"error": "Invalid email or password"})
 
     def test_resolve_static_path_supports_spa_fallback_and_blocks_traversal(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

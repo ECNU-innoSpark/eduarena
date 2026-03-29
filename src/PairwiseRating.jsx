@@ -231,6 +231,14 @@ export const PAIRWISE_CSS = `
     color: var(--muted);
   }
 
+  .candidate-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
   .candidate-body {
     padding: 0 16px 16px;
     min-width: 0;
@@ -360,7 +368,7 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-candidates .message-card {
-    padding: 14px 0;
+    padding: 14px 0 12px;
     border: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0;
@@ -375,6 +383,53 @@ export const PAIRWISE_CSS = `
   .pairwise-candidates .message-card.assistant {
     border-color: rgba(255, 255, 255, 0.08);
     background: transparent;
+  }
+
+  .pairwise-candidates .message-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .pairwise-candidates .message-role {
+    display: flex;
+    align-items: start;
+    gap: 8px;
+    min-height: 18px;
+  }
+
+  .pairwise-candidates .message-role-label {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 1px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .pairwise-candidates .message-card.user .message-role-label {
+    color: rgba(202, 234, 236, 0.92);
+  }
+
+  .pairwise-candidates .message-card.assistant .message-role-label {
+    color: rgba(241, 198, 160, 0.92);
+  }
+
+  .pairwise-candidates .message-tool-call-id {
+    padding-top: 1px;
+    line-height: 1.15;
+  }
+
+  .pairwise-candidates .message-index {
+    padding-top: 1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .message-fold-toggle {
@@ -930,7 +985,7 @@ function renderConversationMessageCard({
     <div key={messageKey} className={`message-card ${role}`}>
       <div className="message-head">
         <div className="message-role">
-          <span>{role}</span>
+          <span className="message-role-label">{role}</span>
           {message.role === "tool" && message.tool_call_id ? (
             <span className="message-tool-call-id">{message.tool_call_id}</span>
           ) : null}
@@ -1257,7 +1312,7 @@ ${latestText}`;
                         />
                       ) : null}
                       <div className="pairwise-candidate-top">
-                        <div className="message-role">
+                        <div className="candidate-role">
                           <span className="candidate-badge">{isCandidateA ? "A" : "B"}</span>
                           <span>{candidate.label}</span>
                         </div>

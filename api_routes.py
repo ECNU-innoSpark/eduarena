@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 
+from user_auth_store import AuthError
+
 
 @dataclass(frozen=True)
 class ApiResponse:
@@ -98,8 +100,17 @@ def handle_get_request(request_path, workflow, root_dir, dist_dir, data_dir):
     return ApiResponse(status=404, payload={"error": "Not Found"})
 
 
-def handle_post_request(request_path, payload, workflow):
+def handle_post_request(request_path, payload, workflow, auth_store=None):
     parsed = urlparse(request_path)
+    if parsed.path == "/api/auth/login":
+        if auth_store is None:
+            return ApiResponse(status=500, payload={"error": "Auth store unavailable"})
+        try:
+            result = auth_store.authenticate_or_create_user(payload)
+        except AuthError as error:
+            return ApiResponse(status=error.status, payload={"error": str(error)})
+        return ApiResponse(status=200, payload=result)
+
     if parsed.path not in {"/api/qualitative-ratings", "/api/qualitative-ratings-save"}:
         return ApiResponse(status=404, payload={"error": "Not Found"})
 
