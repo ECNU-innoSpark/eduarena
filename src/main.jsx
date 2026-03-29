@@ -143,6 +143,10 @@ const APP_SHELL_CSS = `
     align-items: start;
   }
 
+  .app.sidebar-collapsed {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
   .sidebar {
     display: grid;
     grid-template-rows: auto 1fr auto;
@@ -194,6 +198,12 @@ const APP_SHELL_CSS = `
   .top-actions {
     display: flex;
     gap: 8px;
+  }
+
+  .sidebar-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
   }
 
   .icon-btn {
@@ -390,6 +400,90 @@ const APP_SHELL_CSS = `
     justify-content: flex-end;
   }
 
+  .app.sidebar-collapsed .sidebar-head {
+    padding: 12px 10px 8px;
+  }
+
+  .app.sidebar-collapsed .brand {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .app.sidebar-collapsed .brand-title {
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .app.sidebar-collapsed .brand-title::before {
+    font-size: 22px;
+  }
+
+  .app.sidebar-collapsed .brand h2,
+  .app.sidebar-collapsed .brand-caret,
+  .app.sidebar-collapsed .lang-toggle,
+  .app.sidebar-collapsed .sidebar-group,
+  .app.sidebar-collapsed .account-info,
+  .app.sidebar-collapsed .account-actions {
+    display: none;
+  }
+
+  .app.sidebar-collapsed .top-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .app.sidebar-collapsed .sidebar-toggle {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .app.sidebar-collapsed .sidebar-nav {
+    padding: 12px 10px;
+  }
+
+  .app.sidebar-collapsed .mode-switcher {
+    gap: 12px;
+  }
+
+  .app.sidebar-collapsed .mode-tab {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0;
+    padding: 14px 0;
+    border-radius: 16px;
+  }
+
+  .app.sidebar-collapsed .mode-tab-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .app.sidebar-collapsed .mode-tab-body {
+    display: none;
+  }
+
+  .app.sidebar-collapsed .sidebar-foot {
+    padding: 10px;
+  }
+
+  .app.sidebar-collapsed .account-card,
+  .app.sidebar-collapsed .account-chip {
+    display: flex;
+    justify-content: center;
+  }
+
+  .app.sidebar-collapsed .account-avatar.large {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+
   .link-btn {
     border: 0;
     padding: 0;
@@ -505,6 +599,10 @@ const APP_SHELL_CSS = `
       grid-template-columns: 1fr;
     }
 
+    .app.sidebar-collapsed {
+      grid-template-columns: 1fr;
+    }
+
     .sidebar {
       position: static;
       height: auto;
@@ -534,6 +632,7 @@ function App() {
   const [activeSection, setActiveSection] = useState("leaderboard");
   const [activeView, setActiveView] = useState("overall");
   const [locale, setLocale] = useState("en");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(() => loadStoredUser());
   const [loginForm, setLoginForm] = useState({ name: "", email: "", password: "" });
   const [loginError, setLoginError] = useState("");
@@ -626,7 +725,7 @@ function App() {
   return (
     <>
       <style>{css}</style>
-      <main className="app">
+      <main className={`app ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
         <aside className="sidebar">
           <div className="sidebar-head">
             <div className="brand">
@@ -636,13 +735,21 @@ function App() {
               </div>
               <div className="top-actions">
                 <button
-                  className="icon-btn"
+                  className="icon-btn lang-toggle"
                   onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
                   type="button"
                 >
                   {locale === "zh" ? "中" : "En"}
                 </button>
-                <button className="icon-btn" type="button">◫</button>
+                <button
+                  aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  className="icon-btn sidebar-toggle"
+                  onClick={() => setIsSidebarCollapsed((current) => !current)}
+                  title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  type="button"
+                >
+                  {isSidebarCollapsed ? "▸" : "◧"}
+                </button>
               </div>
             </div>
           </div>
@@ -653,6 +760,7 @@ function App() {
                   key={section.key}
                   className={`mode-tab ${activeSection === section.key ? "active" : ""}`}
                   onClick={() => setActiveSection(section.key)}
+                  title={section.label}
                   type="button"
                 >
                   <span className="mode-tab-icon" aria-hidden="true">{section.icon}</span>
