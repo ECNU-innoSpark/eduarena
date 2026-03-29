@@ -140,6 +140,7 @@ const APP_SHELL_CSS = `
     min-height: 100vh;
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
+    align-items: start;
   }
 
   .sidebar {
@@ -147,9 +148,10 @@ const APP_SHELL_CSS = `
     grid-template-rows: auto 1fr auto;
     background: linear-gradient(180deg, #252520 0%, #22221f 100%);
     border-right: 1px solid var(--line);
-    min-height: 100vh;
+    height: 100vh;
     position: sticky;
     top: 0;
+    overflow: hidden;
   }
 
   .sidebar-head {
@@ -215,6 +217,8 @@ const APP_SHELL_CSS = `
 
   .sidebar-nav {
     padding: 8px;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .mode-switcher {
@@ -503,7 +507,12 @@ const APP_SHELL_CSS = `
 
     .sidebar {
       position: static;
-      min-height: auto;
+      height: auto;
+      overflow: visible;
+    }
+
+    .sidebar-nav {
+      overflow: visible;
     }
 
     .login-panel {
