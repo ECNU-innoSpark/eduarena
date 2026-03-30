@@ -616,6 +616,336 @@ export const PAIRWISE_CSS = `
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+
+  .pairwise {
+    padding: 24px;
+    padding-bottom: 120px;
+  }
+
+  .pairwise-layout {
+    display: grid;
+    gap: 22px;
+  }
+
+  .pairwise-stage {
+    display: grid;
+    gap: 22px;
+    padding: clamp(18px, 2vw, 28px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(circle at top right, rgba(75, 149, 154, 0.18), transparent 28%),
+      radial-gradient(circle at top left, rgba(207, 132, 78, 0.14), transparent 28%),
+      rgba(25, 24, 22, 0.94);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.26);
+  }
+
+  .pairwise-stage-toolbar,
+  .pairwise-stage-actions,
+  .pairwise-stage-meta,
+  .pairwise-shared-prompt-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pairwise-stage-actions {
+    justify-content: flex-end;
+  }
+
+  .pairwise-stage-meta {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .pairwise-scene-chip,
+  .pairwise-record-id {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .pairwise-record-id {
+    font-size: 12px;
+    color: rgba(233, 237, 240, 0.74);
+  }
+
+  .pairwise-scene-chip {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .conversation-filters {
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .conversation-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .conversation-filter input {
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .pairwise-stage-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+
+  .pairwise-stage-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .pairwise-shared-prompt {
+    display: grid;
+    gap: 10px;
+  }
+
+  .pairwise-shared-prompt-label {
+    color: rgba(233, 237, 240, 0.7);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .pairwise-shared-prompt-note {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .pairwise-prompt-bubble {
+    margin-left: auto;
+    width: min(100%, 860px);
+    padding: 22px 24px;
+    border-radius: 28px 28px 10px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .pairwise-prompt-bubble > :first-child,
+  .pairwise-prompt-bubble > :first-child > :first-child {
+    margin-top: 0;
+  }
+
+  .pairwise-prompt-bubble > :last-child,
+  .pairwise-prompt-bubble > :last-child > :last-child {
+    margin-bottom: 0;
+  }
+
+  .pairwise-shared-prompt-foot {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .pairwise-candidate-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    align-items: stretch;
+  }
+
+  .pairwise-candidate-card {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    min-height: 520px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 20, 18, 0.92);
+    overflow: hidden;
+  }
+
+  .pairwise-candidate-card[data-slot="a"] {
+    background:
+      linear-gradient(180deg, rgba(68, 134, 138, 0.12), transparent 112px),
+      rgba(20, 20, 18, 0.94);
+  }
+
+  .pairwise-candidate-card[data-slot="b"] {
+    background:
+      linear-gradient(180deg, rgba(202, 132, 76, 0.12), transparent 112px),
+      rgba(20, 20, 18, 0.94);
+  }
+
+  .pairwise-candidate-top {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .pairwise-candidate-heading {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .candidate-caption {
+    color: rgba(233, 237, 240, 0.64);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .candidate-role {
+    gap: 12px;
+    font-size: clamp(24px, 2vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .candidate-badge {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .pairwise-candidate-card[data-slot="a"] .candidate-badge {
+    background: rgba(75, 149, 154, 0.18);
+  }
+
+  .pairwise-candidate-card[data-slot="b"] .candidate-badge {
+    background: rgba(207, 132, 78, 0.18);
+  }
+
+  .candidate-name {
+    font-size: 13px;
+    color: rgba(233, 237, 240, 0.62);
+    overflow-wrap: anywhere;
+  }
+
+  .candidate-picker {
+    padding: 14px 22px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .candidate-picker-inline > span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .candidate-body {
+    min-height: 0;
+    padding: 0 22px 24px;
+    overflow: auto;
+  }
+
+  .comparison-response-list {
+    padding-top: 8px;
+  }
+
+  .pairwise-candidates .conversation-list,
+  .comparison-response-list {
+    gap: 0;
+  }
+
+  .pairwise-bottom-inner {
+    width: min(1040px, calc(100% - 24px));
+  }
+
+  @media (max-width: 1080px) {
+    .pairwise-stage-toolbar,
+    .pairwise-stage-actions,
+    .pairwise-shared-prompt-head {
+      align-items: stretch;
+    }
+
+    .pairwise-prompt-bubble {
+      width: 100%;
+    }
+
+    .pairwise-candidate-grid,
+    .dimension-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pairwise-candidate-card {
+      min-height: 420px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pairwise {
+      padding: 14px;
+      padding-bottom: 128px;
+    }
+
+    .pairwise-stage {
+      gap: 18px;
+      padding: 16px;
+      border-radius: 22px;
+    }
+
+    .pairwise-stage-toolbar,
+    .pairwise-stage-actions,
+    .pairwise-stage-meta,
+    .pairwise-shared-prompt-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .pairwise-prompt-bubble {
+      margin-left: 0;
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .pairwise-shared-prompt-foot {
+      margin-left: 0;
+    }
+
+    .pairwise-candidate-card {
+      min-height: auto;
+      border-radius: 22px;
+    }
+
+    .pairwise-candidate-top,
+    .candidate-picker {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .candidate-body {
+      padding: 0 16px 18px;
+    }
+  }
 `;
 
 const DIMENSIONS = [
@@ -646,11 +976,15 @@ const PAIRWISE_COPY = {
     scoring: "Pairwise 评分",
     stats: "评分概览",
     selectMessage: "选择消息文件",
-    selectCandidateA: "选择候选 A 消息",
-    selectCandidateB: "选择候选 B 消息",
+    selectCandidateA: "候选 A 文件",
+    selectCandidateB: "候选 B 模型",
     messagesUnit: "条消息",
     showTool: "显示 tool",
     showSystemPrompt: "显示 system prompt",
+    sharedPrompt: "共享题目",
+    sharedPromptHint: "A / B 使用同一道题，下方只展示各自回答。",
+    nextQuestion: "换一题",
+    userTurns: "条用户消息",
     preferred: "整体胜负",
     winnerOptions: [
       { value: "a", label: "A 更好" },
@@ -677,8 +1011,8 @@ const PAIRWISE_COPY = {
     summaryWinner: "当前胜者",
     noCandidate: "当前记录里没有明确的双候选回答，已回退为从 assistant 消息中提取示例内容。",
     candidateFallback: "暂无候选回答内容。",
-    candidateA: "候选 A",
-    candidateB: "候选 B",
+    candidateA: "助手 A",
+    candidateB: "助手 B",
   },
   en: {
     workspace: "Pairwise Workspace",
@@ -694,11 +1028,15 @@ const PAIRWISE_COPY = {
     scoring: "Pairwise Scoring",
     stats: "Rating Summary",
     selectMessage: "Message file",
-    selectCandidateA: "Select candidate A message",
-    selectCandidateB: "Select candidate B message",
+    selectCandidateA: "Candidate A file",
+    selectCandidateB: "Candidate B model",
     messagesUnit: "messages",
     showTool: "Show tool",
     showSystemPrompt: "Show system prompt",
+    sharedPrompt: "Shared prompt",
+    sharedPromptHint: "Both assistants answer the same prompt; only their replies are shown below.",
+    nextQuestion: "Next prompt",
+    userTurns: "user turns",
     preferred: "Overall winner",
     winnerOptions: [
       { value: "a", label: "A Better" },
@@ -725,8 +1063,8 @@ const PAIRWISE_COPY = {
     summaryWinner: "Current winner",
     noCandidate: "No explicit pairwise candidates were found in this record. Falling back to assistant messages.",
     candidateFallback: "No candidate answer content found.",
-    candidateA: "Candidate A",
-    candidateB: "Candidate B",
+    candidateA: "Assistant A",
+    candidateB: "Assistant B",
   },
 };
 
@@ -874,6 +1212,28 @@ function extractTextContent(content) {
     .join("\n\n");
 }
 
+function buildSharedPrompt(record) {
+  const userMessages = (record?.messages ?? []).filter((message) => message?.role === "user");
+  const latestUserMessage = [...userMessages]
+    .reverse()
+    .map((message) => extractTextContent(message?.content).trim())
+    .find(Boolean);
+
+  return {
+    text: latestUserMessage || String(record?.question ?? "").trim(),
+    userTurnCount: userMessages.length,
+  };
+}
+
+function getVisibleCandidateMessages(messages, { showToolMessages, showSystemMessages }) {
+  return (messages ?? []).filter((message) => {
+    if (!message || message.role === "user") return false;
+    if (!showToolMessages && message.role === "tool") return false;
+    if (!showSystemMessages && message.role === "system") return false;
+    return true;
+  });
+}
+
 function formatToolArguments(rawArguments) {
   if (!rawArguments) return "";
 
@@ -943,6 +1303,11 @@ function getCandidateQuestionFolder(fileName) {
 function getCandidateVariant(fileName) {
   const parts = splitMessagePath(fileName);
   return parts.length > 1 ? parts.slice(-2).join("/") : String(fileName || "");
+}
+
+function getCandidateVariantLabel(fileName) {
+  const parts = splitMessagePath(fileName);
+  return parts.length > 1 ? parts[parts.length - 2] : String(fileName || "");
 }
 
 function buildCandidateFileFromFolder(folderName, variantFile) {
@@ -1127,6 +1492,7 @@ export function PairwiseRating({ locale = "zh" }) {
   }, [selectedCandidateAFile, selectedCandidateBVariant]);
 
   const activeRecord = candidateARecord ?? candidateBRecord ?? null;
+  const sharedPrompt = useMemo(() => buildSharedPrompt(activeRecord), [activeRecord]);
 
   useEffect(() => {
     setRatings(createEmptyPairwiseRatings());
@@ -1138,7 +1504,6 @@ export function PairwiseRating({ locale = "zh" }) {
 
     return {
       candidates: [candidateA, candidateB],
-      usedFallback: !(candidateA.content && candidateB.content),
     };
   }, [candidateARecord, candidateARawRecord, candidateBRecord, candidateBRawRecord, copy.candidateA, copy.candidateB]);
 
@@ -1170,13 +1535,6 @@ ${latestText}`;
     };
     setRatings(nextRatings);
     return nextRatings;
-  }
-
-  function toggleMessage(index) {
-    setCollapsedMessages((current) => ({
-      ...current,
-      [index]: !current[index],
-    }));
   }
 
   function advanceToNextCandidates() {
@@ -1258,76 +1616,106 @@ ${latestText}`;
         <div className="pairwise-debug-floating" title={ratingFolderDebugTitle}>{ratingFolderDebugMessage}</div>
         {activeRecord ? (
           <div className="pairwise-layout">
-            <div className="pairwise-candidates">
-              <div className="pairwise-candidate-controls">
-                <span className="pairwise-record-id">{activeRecord.record_id}</span>
-                <div className="conversation-filters">
-                  <label className="conversation-filter">
-                    <input
-                      checked={showToolMessages}
-                      onChange={(event) => setShowToolMessages(event.target.checked)}
-                      type="checkbox"
-                    />
-                    <span>{copy.showTool}</span>
-                  </label>
-                  <label className="conversation-filter">
-                    <input
-                      checked={showSystemMessages}
-                      onChange={(event) => setShowSystemMessages(event.target.checked)}
-                      type="checkbox"
-                    />
-                    <span>{copy.showSystemPrompt}</span>
-                  </label>
+            <div className="pairwise-stage pairwise-candidates">
+              <div className="pairwise-stage-toolbar">
+                <div className="pairwise-stage-meta">
+                  <span className="pairwise-scene-chip">{activeRecord.scenario}</span>
+                  <span className="pairwise-record-id">{activeRecord.record_id}</span>
+                </div>
+                <div className="pairwise-stage-actions">
+                  <div className="conversation-filters">
+                    <label className="conversation-filter">
+                      <input
+                        checked={showToolMessages}
+                        onChange={(event) => setShowToolMessages(event.target.checked)}
+                        type="checkbox"
+                      />
+                      <span>{copy.showTool}</span>
+                    </label>
+                    <label className="conversation-filter">
+                      <input
+                        checked={showSystemMessages}
+                        onChange={(event) => setShowSystemMessages(event.target.checked)}
+                        type="checkbox"
+                      />
+                      <span>{copy.showSystemPrompt}</span>
+                    </label>
+                  </div>
+                  <button type="button" className="pairwise-stage-button" onClick={advanceToNextCandidates}>
+                    {copy.nextQuestion}
+                  </button>
                 </div>
               </div>
+
+              <div className="pairwise-shared-prompt">
+                <div className="pairwise-shared-prompt-head">
+                  <span className="pairwise-shared-prompt-label">{copy.sharedPrompt}</span>
+                  <span className="pairwise-shared-prompt-note">{copy.sharedPromptHint}</span>
+                </div>
+                <div className="pairwise-prompt-bubble">
+                  {sharedPrompt.text ? renderMarkdown(sharedPrompt.text) : <p>{activeRecord.question}</p>}
+                </div>
+                {sharedPrompt.userTurnCount > 1 ? (
+                  <div className="pairwise-shared-prompt-foot">
+                    {sharedPrompt.userTurnCount} {copy.userTurns}
+                  </div>
+                ) : null}
+              </div>
+
               <div className="pairwise-candidate-grid">
                 {pairwiseCandidates.candidates.map((candidate, index) => {
                   const isCandidateA = index === 0;
+                  const slotKey = isCandidateA ? "a" : "b";
                   const selectedFile = isCandidateA ? selectedCandidateAFile : selectedCandidateBVariant;
                   const setSelectedFile = isCandidateA ? setSelectedCandidateAFile : setSelectedCandidateBVariant;
                   const selectLabel = isCandidateA ? copy.selectCandidateA : copy.selectCandidateB;
                   const selectOptions = isCandidateA ? messageOptions : candidateBOptions;
-                  const candidateMessages = candidate.messages.filter((message) => {
-                    if (!showToolMessages && message.role === "tool") return false;
-                    if (!showSystemMessages && message.role === "system") return false;
-                    return true;
+                  const candidateMessages = getVisibleCandidateMessages(candidate.messages, {
+                    showToolMessages,
+                    showSystemMessages,
                   });
                   const hiddenMessageCount = Math.max(candidateMessages.length - 2, 0);
-                  const middleMessagesKey = selectedFile || `${isCandidateA ? "a" : "b"}-${index}`;
+                  const middleMessagesKey = selectedFile || `${slotKey}-${index}`;
                   const isMiddleExpanded = expandedMiddleMessages[middleMessagesKey] ?? false;
+                  const candidateTitle = getCandidateVariantLabel(selectedFile) || candidate.label;
 
                   return (
-                    <div
+                    <article
                       key={`${candidate.label}-${index}`}
                       className="pairwise-candidate-card"
-                      data-slot={isCandidateA ? "a" : "b"}
+                      data-slot={slotKey}
                     >
-                      {messageOptions.length ? (
+                      <div className="pairwise-candidate-top">
+                        <div className="pairwise-candidate-heading">
+                          <span className="candidate-caption">{candidate.label}</span>
+                          <div className="candidate-role">
+                            <span className="candidate-badge">{isCandidateA ? "A" : "B"}</span>
+                            <span>{candidateTitle}</span>
+                          </div>
+                          <span className="candidate-name">
+                            {candidate.meta} · {candidate.turnCount ?? 0} {copy.messagesUnit}
+                          </span>
+                        </div>
+                      </div>
+
+                      {selectOptions.length ? (
                         <TypeaheadDropdown
-                          fieldClassName="field candidate-picker"
+                          fieldClassName="field candidate-picker candidate-picker-inline"
                           label={selectLabel}
                           onChange={setSelectedFile}
                           options={selectOptions}
                           value={selectedFile}
                         />
                       ) : null}
-                      <div className="pairwise-candidate-top">
-                        <div className="candidate-role">
-                          <span className="candidate-badge">{isCandidateA ? "A" : "B"}</span>
-                          <span>{candidate.label}</span>
-                        </div>
-                        <span className="candidate-name">
-                          {candidate.meta} · {candidate.turnCount ?? 0} {copy.messagesUnit}
-                        </span>
-                      </div>
+
                       <div className="candidate-body">
                         {candidateMessages.length ? (
-                          <div className="conversation-list">
+                          <div className="conversation-list comparison-response-list">
                             {candidateMessages.slice(0, 1).map((message, messageIndex) =>
                               renderConversationMessageCard({
                                 message,
                                 messageIndex,
-                                slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                                slotKey: `${slotKey}-${middleMessagesKey}`,
                               }),
                             )}
 
@@ -1352,7 +1740,7 @@ ${latestText}`;
                                     return renderConversationMessageCard({
                                       message,
                                       messageIndex: actualIndex,
-                                      slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                                      slotKey: `${slotKey}-${middleMessagesKey}`,
                                     });
                                   })
                                   : null}
@@ -1364,7 +1752,7 @@ ${latestText}`;
                                 renderConversationMessageCard({
                                   message,
                                   messageIndex: candidateMessages.length - 1,
-                                  slotKey: `${isCandidateA ? "a" : "b"}-${middleMessagesKey}`,
+                                  slotKey: `${slotKey}-${middleMessagesKey}`,
                                 }),
                               )
                               : null}
@@ -1373,7 +1761,7 @@ ${latestText}`;
                           <p>{copy.candidateFallback}</p>
                         )}
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
