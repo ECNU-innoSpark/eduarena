@@ -1648,10 +1648,6 @@ ${latestText}`;
               </div>
 
               <div className="pairwise-shared-prompt">
-                <div className="pairwise-shared-prompt-head">
-                  <span className="pairwise-shared-prompt-label">{copy.sharedPrompt}</span>
-                  <span className="pairwise-shared-prompt-note">{copy.sharedPromptHint}</span>
-                </div>
                 <div className="pairwise-prompt-bubble">
                   {sharedPrompt.text ? renderMarkdown(sharedPrompt.text) : <p>{activeRecord.question}</p>}
                 </div>
