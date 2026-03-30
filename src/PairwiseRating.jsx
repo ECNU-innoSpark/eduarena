@@ -743,8 +743,8 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-prompt-bubble {
-    margin-left: auto;
-    width: min(100%, 860px);
+    margin-left: 0;
+    width: 100%;
     padding: 22px 24px;
     border-radius: 28px 28px 10px 28px;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -908,7 +908,7 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-bottom-inner {
-    width: min(1040px, calc(100% - 24px));
+    width: 100%;
   }
 
   @media (max-width: 1080px) {

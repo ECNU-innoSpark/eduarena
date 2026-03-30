@@ -591,7 +591,8 @@ const APP_SHELL_CSS = `
   }
 
   .workspace {
-    max-width: 1380px;
+    width: 100%;
+    max-width: none;
   }
 
   @media (max-width: 920px) {
