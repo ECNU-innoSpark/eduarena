@@ -798,6 +798,10 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-candidate-top {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 16px;
     padding: 20px 22px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
@@ -846,6 +850,28 @@ export const PAIRWISE_CSS = `
     font-size: 13px;
     color: rgba(233, 237, 240, 0.62);
     overflow-wrap: anywhere;
+  }
+
+  .candidate-picker-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    transition: background 160ms ease, border-color 160ms ease;
+  }
+
+  .candidate-picker-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .candidate-picker {
@@ -978,6 +1004,8 @@ const PAIRWISE_COPY = {
     selectMessage: "选择消息文件",
     selectCandidateA: "候选 A 文件",
     selectCandidateB: "候选 B 模型",
+    showCandidatePicker: "显示选择",
+    hideCandidatePicker: "隐藏选择",
     messagesUnit: "条消息",
     showTool: "显示 tool",
     showSystemPrompt: "显示 system prompt",
@@ -1030,6 +1058,8 @@ const PAIRWISE_COPY = {
     selectMessage: "Message file",
     selectCandidateA: "Candidate A file",
     selectCandidateB: "Candidate B model",
+    showCandidatePicker: "Show picker",
+    hideCandidatePicker: "Hide picker",
     messagesUnit: "messages",
     showTool: "Show tool",
     showSystemPrompt: "Show system prompt",
@@ -1379,6 +1409,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [saveState, setSaveState] = useState("");
   const [showToolMessages, setShowToolMessages] = useState(true);
   const [showSystemMessages, setShowSystemMessages] = useState(false);
+  const [visibleCandidatePickers, setVisibleCandidatePickers] = useState({ a: false, b: false });
   const [expandedMiddleMessages, setExpandedMiddleMessages] = useState({});
   const [isSaveFolded, setIsSaveFolded] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
@@ -1496,6 +1527,7 @@ export function PairwiseRating({ locale = "zh" }) {
 
   useEffect(() => {
     setRatings(createEmptyPairwiseRatings());
+    setVisibleCandidatePickers({ a: false, b: false });
   }, [activeRecord?.record_id]);
 
   const pairwiseCandidates = useMemo(() => {
@@ -1674,6 +1706,7 @@ ${latestText}`;
                   const middleMessagesKey = selectedFile || `${slotKey}-${index}`;
                   const isMiddleExpanded = expandedMiddleMessages[middleMessagesKey] ?? false;
                   const candidateTitle = getCandidateVariantLabel(selectedFile) || candidate.label;
+                  const isPickerVisible = visibleCandidatePickers[slotKey] ?? false;
 
                   return (
                     <article
@@ -1692,9 +1725,24 @@ ${latestText}`;
                             {candidate.meta} · {candidate.turnCount ?? 0} {copy.messagesUnit}
                           </span>
                         </div>
+                        {selectOptions.length ? (
+                          <button
+                            type="button"
+                            className="candidate-picker-toggle"
+                            aria-expanded={isPickerVisible}
+                            onClick={() => {
+                              setVisibleCandidatePickers((current) => ({
+                                ...current,
+                                [slotKey]: !current[slotKey],
+                              }));
+                            }}
+                          >
+                            {isPickerVisible ? copy.hideCandidatePicker : copy.showCandidatePicker}
+                          </button>
+                        ) : null}
                       </div>
 
-                      {selectOptions.length ? (
+                      {isPickerVisible && selectOptions.length ? (
                         <TypeaheadDropdown
                           fieldClassName="field candidate-picker candidate-picker-inline"
                           label={selectLabel}
