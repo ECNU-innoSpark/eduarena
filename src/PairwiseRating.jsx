@@ -798,12 +798,17 @@ export const PAIRWISE_CSS = `
   }
 
   .pairwise-candidate-top {
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: 16px;
+    display: grid;
+    gap: 14px;
     padding: 20px 22px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .pairwise-candidate-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
   }
 
   .pairwise-candidate-heading {
@@ -1004,8 +1009,8 @@ const PAIRWISE_COPY = {
     selectMessage: "选择消息文件",
     selectCandidateA: "候选 A 文件",
     selectCandidateB: "候选 B 模型",
-    showCandidatePicker: "显示选择",
-    hideCandidatePicker: "隐藏选择",
+    showCandidatePicker: "显示详情",
+    hideCandidatePicker: "隐藏详情",
     messagesUnit: "条消息",
     showTool: "显示 tool",
     showSystemPrompt: "显示 system prompt",
@@ -1058,8 +1063,8 @@ const PAIRWISE_COPY = {
     selectMessage: "Message file",
     selectCandidateA: "Candidate A file",
     selectCandidateB: "Candidate B model",
-    showCandidatePicker: "Show picker",
-    hideCandidatePicker: "Hide picker",
+    showCandidatePicker: "Show details",
+    hideCandidatePicker: "Hide details",
     messagesUnit: "messages",
     showTool: "Show tool",
     showSystemPrompt: "Show system prompt",
@@ -1715,17 +1720,8 @@ ${latestText}`;
                       data-slot={slotKey}
                     >
                       <div className="pairwise-candidate-top">
-                        <div className="pairwise-candidate-heading">
+                        <div className="pairwise-candidate-top-row">
                           <span className="candidate-caption">{candidate.label}</span>
-                          <div className="candidate-role">
-                            <span className="candidate-badge">{isCandidateA ? "A" : "B"}</span>
-                            <span>{candidateTitle}</span>
-                          </div>
-                          <span className="candidate-name">
-                            {candidate.meta} · {candidate.turnCount ?? 0} {copy.messagesUnit}
-                          </span>
-                        </div>
-                        {selectOptions.length ? (
                           <button
                             type="button"
                             className="candidate-picker-toggle"
@@ -1739,6 +1735,18 @@ ${latestText}`;
                           >
                             {isPickerVisible ? copy.hideCandidatePicker : copy.showCandidatePicker}
                           </button>
+                        </div>
+
+                        {isPickerVisible ? (
+                          <div className="pairwise-candidate-heading">
+                            <div className="candidate-role">
+                              <span className="candidate-badge">{isCandidateA ? "A" : "B"}</span>
+                              <span>{candidateTitle}</span>
+                            </div>
+                            <span className="candidate-name">
+                              {candidate.meta} · {candidate.turnCount ?? 0} {copy.messagesUnit}
+                            </span>
+                          </div>
                         ) : null}
                       </div>
 
