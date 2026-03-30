@@ -629,7 +629,7 @@ const css = `${APP_SHELL_CSS}\n${ANNOTATION_CSS}\n${PAIRWISE_CSS}\n${LEADERBOARD
 
 function App() {
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState("leaderboard");
+  const [activeSection, setActiveSection] = useState("pairwise");
   const [activeView, setActiveView] = useState("overall");
   const [locale, setLocale] = useState("en");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
