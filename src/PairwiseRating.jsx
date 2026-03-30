@@ -1262,7 +1262,7 @@ function buildSharedPrompt(record) {
 
 function getVisibleCandidateMessages(messages, { showToolMessages, showSystemMessages }) {
   return (messages ?? []).filter((message) => {
-    if (!message || message.role === "user") return false;
+    if (!message) return false;
     if (!showToolMessages && message.role === "tool") return false;
     if (!showSystemMessages && message.role === "system") return false;
     return true;
