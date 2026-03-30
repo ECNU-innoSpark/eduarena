@@ -1,0 +1,9 @@
+[submodule "data/qualitative/messages_v2"]
+	path = data/qualitative/messages_v2
+	url = git@github.com:LikeSwim/message_data.git
+[submodule "data/qualitative/messages_v3"]
+	path = data/qualitative/messages_v3
+	url = git@github.com:LikeSwim/message_data.git
+[submodule "data/qualitative/new_message_data"]
+	path = data/qualitative/new_message_data
+	url = git@github.com:LikeSwim/new_message_data.git
