@@ -393,6 +393,12 @@ export const PAIRWISE_CSS = `
     margin-bottom: 8px;
   }
 
+  .pairwise-candidates .message-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .pairwise-candidates .message-role {
     display: flex;
     align-items: start;
@@ -430,6 +436,29 @@ export const PAIRWISE_CSS = `
     padding-top: 1px;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+  }
+
+  .message-inline-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .message-inline-toggle:hover {
+    color: var(--text);
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .message-fold-toggle {
@@ -1011,6 +1040,8 @@ const PAIRWISE_COPY = {
     selectCandidateB: "候选 B 模型",
     showCandidatePicker: "显示详情",
     hideCandidatePicker: "隐藏详情",
+    foldMessage: "收起",
+    expandMessage: "展开",
     messagesUnit: "条消息",
     showTool: "显示 tool",
     showSystemPrompt: "显示 system prompt",
@@ -1065,6 +1096,8 @@ const PAIRWISE_COPY = {
     selectCandidateB: "Candidate B model",
     showCandidatePicker: "Show details",
     hideCandidatePicker: "Hide details",
+    foldMessage: "Fold",
+    expandMessage: "Expand",
     messagesUnit: "messages",
     showTool: "Show tool",
     showSystemPrompt: "Show system prompt",
@@ -1373,13 +1406,20 @@ function pickRandomCandidateAFile(items, currentFile = "") {
   return candidates[randomIndex] ?? "";
 }
 
+function getConversationMessageKey({ slotKey, message, messageIndex }) {
+  return `${slotKey}-${message?.role || "unknown"}-${messageIndex}-${message?.tool_call_id || message?.id || "message"}`;
+}
+
 function renderConversationMessageCard({
   message,
   messageIndex,
   slotKey,
+  copy,
+  isCollapsed,
+  onToggleCollapse,
 }) {
   const role = message.role || "unknown";
-  const messageKey = `${slotKey}-${role}-${messageIndex}-${message.tool_call_id || message.id || "message"}`;
+  const messageKey = getConversationMessageKey({ slotKey, message, messageIndex });
 
   return (
     <div key={messageKey} className={`message-card ${role}`}>
@@ -1390,11 +1430,23 @@ function renderConversationMessageCard({
             <span className="message-tool-call-id">{message.tool_call_id}</span>
           ) : null}
         </div>
-        <div className="message-index">#{messageIndex + 1}</div>
+        <div className="message-head-actions">
+          <div className="message-index">#{messageIndex + 1}</div>
+          <button
+            type="button"
+            className="message-inline-toggle"
+            aria-expanded={!isCollapsed}
+            onClick={onToggleCollapse}
+          >
+            {isCollapsed ? copy.expandMessage : copy.foldMessage}
+          </button>
+        </div>
       </div>
-      <div className="message-body">
-        {renderMessageContent(message)}
-      </div>
+      {isCollapsed ? null : (
+        <div className="message-body">
+          {renderMessageContent(message)}
+        </div>
+      )}
     </div>
   );
 }
@@ -1415,6 +1467,7 @@ export function PairwiseRating({ locale = "zh" }) {
   const [showToolMessages, setShowToolMessages] = useState(true);
   const [showSystemMessages, setShowSystemMessages] = useState(false);
   const [visibleCandidatePickers, setVisibleCandidatePickers] = useState({ a: false, b: false });
+  const [collapsedMessages, setCollapsedMessages] = useState({});
   const [expandedMiddleMessages, setExpandedMiddleMessages] = useState({});
   const [isSaveFolded, setIsSaveFolded] = useState(true);
   const [isDimensionFolded, setIsDimensionFolded] = useState(true);
@@ -1533,6 +1586,7 @@ export function PairwiseRating({ locale = "zh" }) {
   useEffect(() => {
     setRatings(createEmptyPairwiseRatings());
     setVisibleCandidatePickers({ a: false, b: false });
+    setCollapsedMessages({});
   }, [activeRecord?.record_id]);
 
   const pairwiseCandidates = useMemo(() => {
@@ -1713,6 +1767,29 @@ ${latestText}`;
                   const candidateTitle = getCandidateVariantLabel(selectedFile) || candidate.label;
                   const isPickerVisible = visibleCandidatePickers[slotKey] ?? false;
 
+                  function renderCandidateMessage(message, messageIndex) {
+                    const messageSlotKey = `${slotKey}-${middleMessagesKey}`;
+                    const messageKey = getConversationMessageKey({
+                      slotKey: messageSlotKey,
+                      message,
+                      messageIndex,
+                    });
+
+                    return renderConversationMessageCard({
+                      message,
+                      messageIndex,
+                      slotKey: messageSlotKey,
+                      copy,
+                      isCollapsed: collapsedMessages[messageKey] ?? false,
+                      onToggleCollapse: () => {
+                        setCollapsedMessages((current) => ({
+                          ...current,
+                          [messageKey]: !current[messageKey],
+                        }));
+                      },
+                    });
+                  }
+
                   return (
                     <article
                       key={`${candidate.label}-${index}`}
@@ -1763,13 +1840,7 @@ ${latestText}`;
                       <div className="candidate-body">
                         {candidateMessages.length ? (
                           <div className="conversation-list comparison-response-list">
-                            {candidateMessages.slice(0, 1).map((message, messageIndex) =>
-                              renderConversationMessageCard({
-                                message,
-                                messageIndex,
-                                slotKey: `${slotKey}-${middleMessagesKey}`,
-                              }),
-                            )}
+                            {candidateMessages.slice(0, 1).map((message, messageIndex) => renderCandidateMessage(message, messageIndex))}
 
                             {hiddenMessageCount > 0 ? (
                               <>
@@ -1789,24 +1860,14 @@ ${latestText}`;
                                 {isMiddleExpanded
                                   ? candidateMessages.slice(1, -1).map((message, middleIndex) => {
                                     const actualIndex = middleIndex + 1;
-                                    return renderConversationMessageCard({
-                                      message,
-                                      messageIndex: actualIndex,
-                                      slotKey: `${slotKey}-${middleMessagesKey}`,
-                                    });
+                                    return renderCandidateMessage(message, actualIndex);
                                   })
                                   : null}
                               </>
                             ) : null}
 
                             {candidateMessages.length > 1
-                              ? candidateMessages.slice(-1).map((message) =>
-                                renderConversationMessageCard({
-                                  message,
-                                  messageIndex: candidateMessages.length - 1,
-                                  slotKey: `${slotKey}-${middleMessagesKey}`,
-                                }),
-                              )
+                              ? candidateMessages.slice(-1).map((message) => renderCandidateMessage(message, candidateMessages.length - 1))
                               : null}
                           </div>
                         ) : (
