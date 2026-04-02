@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-git pull
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd $ROOT_DIR
+git pull
+
 HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-8081}"
 NODE_VERSION="${NODE_VERSION:-v22.11.0}"
